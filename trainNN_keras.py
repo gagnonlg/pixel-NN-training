@@ -12,8 +12,8 @@ from ThresholdEarlyStopping import ThresholdEarlyStopping
 def parse_args(argv):
     p = argparse.ArgumentParser()
     p.add_argument('--training-input', required=True)
-    p.add_argument('--validation-input', required=True)
     p.add_argument('--output', required=True)
+    p.add_argument('--validation-fraction', type=float, default=0.1)
     p.add_argument('--targets', type=int, default=3)
     p.add_argument('--structure', nargs='+', type=int, default=[60,25,20,3])
     p.add_argument('--activation', choices=['sigmoid', 'tanh', 'relu'], default='sigmoid')
@@ -89,7 +89,7 @@ def normalize_inplace(m):
     return m
 
 def trainNN(training_input,
-            validation_input,
+            validation_fraction,
             output,
             targets=3,
             structure=[60,25,20,3],
@@ -128,10 +128,8 @@ def trainNN(training_input,
     ]
 
     trainX, trainY = load_data(training_input, targets)
-    validX, validY = load_data(validation_input, targets)
 
     normalize_inplace(trainX)
-    normalize_inplace(validX)
 
     model.fit(
         trainX,
@@ -140,7 +138,7 @@ def trainNN(training_input,
         nb_epoch=max_epochs,
         verbose=(2 if verbose else 0),
         callbacks=callbacks,
-        validation_data=(validX,validY),
+        validation_split=validation_fraction,
         shuffle=False
     )
 
@@ -148,7 +146,7 @@ def main(argv):
     args = parse_args(argv)
     trainNN(
         args.training_input,
-        args.validation_input,
+        args.validation_fraction,
         args.output,
         args.targets,
         args.structure,
