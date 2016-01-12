@@ -30,7 +30,7 @@ def parse_args(argv):
     return p.parse_args(argv)
 
 def load_data(path,targets):
-    data = np.loadtxt(path,delimiter=',')
+    data = np.loadtxt(path,delimiter=',',skiprows=1)
     x = data[:,:-targets]
     y = data[:,-targets:]
     return x,y
