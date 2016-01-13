@@ -13,6 +13,7 @@ def parse_args(argv):
     p = argparse.ArgumentParser()
     p.add_argument('--training-input', required=True)
     p.add_argument('--output', required=True)
+    p.add_argument('--shape', nargs=2, type=int)
     p.add_argument('--validation-fraction', type=float, default=0.1)
     p.add_argument('--targets', type=int, default=3)
     p.add_argument('--structure', nargs='+', type=int, default=[60,25,20,3])
@@ -29,10 +30,23 @@ def parse_args(argv):
     p.add_argument('--verbose', default=False, action='store_true')
     return p.parse_args(argv)
 
-def load_data(path,targets):
-    data = np.loadtxt(path,delimiter=',',skiprows=1)
+def load_data(path,targets,shape=None):
+    if shape is not None:
+        data = np.zeros(shape)
+        with open(path, 'r') as csvfile:
+            reader = csv.reader(csvfile, delimiter=',')
+            fst = True
+            for i,row in enumerate(reader):
+                if fst:
+                    fst = False
+                    continue
+                data[i-1,:] = np.array(row)
+    else:
+        data = np.loadtxt(path,delimiter=',',skiprows=1)
+
     x = data[:,:-targets]
     y = data[:,-targets:]
+
     return x,y
 
 def build_model(structure, regularizer, activation, output_activation,
@@ -90,6 +104,7 @@ def normalize_inplace(m):
 def trainNN(training_input,
             validation_fraction,
             output,
+            shape=None,
             targets=3,
             structure=[60,25,20,3],
             activation='sigmoid',
@@ -126,7 +141,7 @@ def trainNN(training_input,
         checkpoint_callback(output, verbose)
     ]
 
-    trainX, trainY = load_data(training_input, targets)
+    trainX, trainY = load_data(training_input, targets, shape)
 
     normalize_inplace(trainX)
 
@@ -147,6 +162,7 @@ def main(argv):
         args.training_input,
         args.validation_fraction,
         args.output,
+        args.shape,
         args.targets,
         args.structure,
         args.activation,
