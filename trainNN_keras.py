@@ -73,8 +73,7 @@ def early_stopping_callback(min_epochs, threshold, increase,
      )
 
 def checkpoint_callback(filepath, verbose):
-    if not filepath.endswith('.hdf5'):
-        filepath += '.hdf5'
+    filepath += '.weights.hdf5'
     return ModelCheckpoint(
         filepath=filepath,
         monitor='val_loss',
@@ -114,7 +113,7 @@ def trainNN(training_input,
         momentum
     )
 
-    with open(os.path.splitext(output)[0] + '.yaml', 'w') as yfile:
+    with open(os.path.splitext(output)[0] + 'model.yaml', 'w') as yfile:
         yfile.write(model.to_yaml())
 
     callbacks = [
