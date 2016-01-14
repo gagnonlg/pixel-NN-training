@@ -129,7 +129,7 @@ def trainNN(training_input,
         momentum
     )
 
-    with open(os.path.splitext(output)[0] + 'model.yaml', 'w') as yfile:
+    with open(os.path.splitext(output)[0] + '.model.yaml', 'w') as yfile:
         yfile.write(model.to_yaml())
 
     callbacks = [
