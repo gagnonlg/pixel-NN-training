@@ -9,6 +9,7 @@ from keras.optimizers import SGD
 from keras.regularizers import l2
 import numpy as np
 from ThresholdEarlyStopping import ThresholdEarlyStopping
+from pixel_utils import load_data
 
 def parse_args(argv):
     p = argparse.ArgumentParser()
@@ -30,25 +31,6 @@ def parse_args(argv):
     p.add_argument('--threshold', type=float, default=0.995)
     p.add_argument('--verbose', default=False, action='store_true')
     return p.parse_args(argv)
-
-def load_data(path,targets,shape=None):
-    if shape is not None:
-        data = np.zeros(shape)
-        with open(path, 'r') as csvfile:
-            reader = csv.reader(csvfile, delimiter=',')
-            fst = True
-            for i,row in enumerate(reader):
-                if fst:
-                    fst = False
-                    continue
-                data[i-1,:] = np.array(row)
-    else:
-        data = np.loadtxt(path,delimiter=',',skiprows=1)
-
-    x = data[:,:-targets]
-    y = data[:,-targets:]
-
-    return x,y
 
 def build_model(structure, regularizer, activation, output_activation,
                 learning_rate, momentum):
@@ -150,7 +132,7 @@ def trainNN(training_input,
         checkpoint_callback(output, verbose)
     ]
 
-    trainX, trainY = load_data(training_input, targets, shape)
+    trainX, trainY, _ = load_data(training_input, targets, shape)
 
     normalize_inplace(trainX, output)
 
