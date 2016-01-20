@@ -85,7 +85,7 @@ def normalize_inplace(m,output):
     stats[0] = m.mean(axis=0)
     stats[1] = m.std(axis=0)
 
-    np.savetxt(stats, output + '.normalization.txt')
+    np.savetxt(output + '.normalization.txt', stats)
 
     m -= stats[0]
     m /= stats[1]
