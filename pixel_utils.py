@@ -1,3 +1,6 @@
+import csv
+import numpy as np
+
 def load_data(path,targets,shape=None):
     if shape is not None:
         data = np.zeros(shape)
