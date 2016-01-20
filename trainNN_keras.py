@@ -97,9 +97,17 @@ def checkpoint_callback(filepath, verbose):
         verbose=verbose
     )
 
-def normalize_inplace(m):
-    m -= m.mean(axis=0)
-    m /= m.std(axis=0)
+def normalize_inplace(m,output):
+
+    stats    = np.zeros((2,m.shape[1]))
+    stats[0] = m.mean(axis=0)
+    stats[1] = m.std(axis=0)
+
+    np.savetxt(stats, output + '.normalization.txt')
+
+    m -= stats[0]
+    m /= stats[1]
+
     return m
 
 def trainNN(training_input,
@@ -144,7 +152,7 @@ def trainNN(training_input,
 
     trainX, trainY = load_data(training_input, targets, shape)
 
-    normalize_inplace(trainX)
+    normalize_inplace(trainX, output)
 
     model.fit(
         trainX,
