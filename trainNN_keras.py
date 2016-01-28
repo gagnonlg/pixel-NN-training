@@ -9,7 +9,7 @@ from keras.optimizers import SGD
 from keras.regularizers import l2
 import numpy as np
 from ThresholdEarlyStopping import ThresholdEarlyStopping
-from pixel_utils import load_data
+from utils import load_data
 
 def parse_args(argv):
     p = argparse.ArgumentParser()
