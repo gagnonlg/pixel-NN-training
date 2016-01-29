@@ -12,9 +12,8 @@ installation instruction at http://keras.io
 Here are the options to the script:
 $ python2 trainNN_keras.py --help
 usage: trainNN_keras.py [-h] --training-input TRAINING_INPUT --output OUTPUT
-                        [--shape SHAPE SHAPE]
+                        --config CONFIG [--shape SHAPE SHAPE]
                         [--validation-fraction VALIDATION_FRACTION]
-                        [--targets TARGETS]
                         [--structure STRUCTURE [STRUCTURE ...]]
                         [--activation {sigmoid,tanh,relu}]
                         [--output-activation {softmax,linear}] [--l2 L2]
@@ -22,34 +21,18 @@ usage: trainNN_keras.py [-h] --training-input TRAINING_INPUT --output OUTPUT
                         [--batch BATCH] [--min-epochs MIN_EPOCHS]
                         [--max-epochs MAX_EPOCHS]
                         [--patience-increase PATIENCE_INCREASE]
-                        [--threshold THRESHOLD] [--verbose]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --training-input TRAINING_INPUT
-  --output OUTPUT
-  --shape SHAPE SHAPE
-  --validation-fraction VALIDATION_FRACTION
-  --targets TARGETS
-  --structure STRUCTURE [STRUCTURE ...]
-  --activation {sigmoid,tanh,relu}
-  --output-activation {softmax,linear}
-  --l2 L2
-  --learning-rate LEARNING_RATE
-  --momentum MOMENTUM
-  --batch BATCH
-  --min-epochs MIN_EPOCHS
-  --max-epochs MAX_EPOCHS
-  --patience-increase PATIENCE_INCREASE
-  --threshold THRESHOLD
-  --verbose
+                        [--threshold THRESHOLD] [--no-normalize] [--verbose]
 
 Refer to the "parse_args" function at the top of the script for the
-default values.
+default values. The config files is used to tell the scripts which
+variables are the inputs and which are the targets. It's also used to
+specify which variable are metadata to be saved by the evalNN script -
+this block is ignored when training. See the example number.config.txt.
 
 $ setupATLAS
 $ lsetup root
-$ python2 trainNN_keras.py --training-input $INPUT --output test
+$ python2 trainNN_keras.py --training-input $INPUT --output test  \
+    --config number.config.txt
 
 This should create the following files:
 test.model.yaml
@@ -66,23 +49,12 @@ usage: evalNN_keras.py [-h] --input INPUT --model MODEL --weights WEIGHTS
                        --config CONFIG --output OUTPUT
                        [--normalization NORMALIZATION]
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --input INPUT
-  --model MODEL
-  --weights WEIGHTS
-  --config CONFIG
-  --output OUTPUT
-  --normalization NORMALIZATION
-
-The --config file is used to tell the script which variables are
-inputs for the NN, which are the targets, and which are metadata to
-store in the db alongside the targets and predictions. You can find
-an example at "number.test-config.txt"
+The --config file is the same as for the training script, but the
+metadata block is saved in the ouput database.
 
 $ python2 evalNN_keras.py --input $TEST_INPUT --model test.model.yaml \
     --weights test.weights.hdf5 --normalization test.normalization.txt \
-    --output test.db --config number.test-config.txt
+    --output test.db --config number.config.txt
 
 This should create an sqlite3 database at "test.db".
 
@@ -94,7 +66,6 @@ ROC_Graph.cxx programs in parallel.
 
 ##### TODO ####################
 
-* Modify trainNN_keras.py to use the same --config scheme as evalNN
 * Generate static lists of SQL queries for number and position neural network ROCS
 * Write a more generic version of test-driver.sh
 * Port the position NN test code which produces residual distributions

@@ -32,7 +32,7 @@ def get_header(path):
     with open(path, 'r') as f:
         return f.readline()[:-1].split(',')
 
-def load_data_bulk(path, shape, extra):
+def load_data_bulk(path, shape, extra=0):
     nrow = shape[0]
     ncol = shape[1]
     data = np.zeros((nrow, ncol + extra))
@@ -45,7 +45,7 @@ def load_data_bulk(path, shape, extra):
 
     return data
 
-def get_data_config_names(path):
+def get_data_config_names(path, meta):
     do_inputs = False
     do_metadata = False
     do_targets = False
@@ -73,7 +73,7 @@ def get_data_config_names(path):
                 continue
             if do_inputs:
                 inputs.append(line.strip(' -\n'))
-            elif do_metadata:
+            elif do_metadata and meta:
                 metadata.append(line.strip(' -\n'))
             elif do_targets:
                 targets.append(line.strip(' -\n'))
@@ -86,6 +86,11 @@ def get_data_config_indices(inputs, targets, metadata, header):
     i_metadata = [i for i,col in enumerate(header) if col in metadata]
     return i_inputs, i_targets, i_metadata
 
-def get_data_config(path, header=None):
-    i,t,m = get_data_config_names(path)
-    return get_data_config_indices(i,t,m,header)
+def get_data_config(path, header, meta=True):
+    i,t,m = get_data_config_names(path, meta)
+    ii,it,im = get_data_config_indices(i,t,m,header)
+    if meta:
+        return ii, it, im
+    else:
+        return ii, it
+

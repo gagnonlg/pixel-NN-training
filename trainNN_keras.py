@@ -9,15 +9,15 @@ from keras.optimizers import SGD
 from keras.regularizers import l2
 import numpy as np
 from ThresholdEarlyStopping import ThresholdEarlyStopping
-from utils import load_data
+import utils
 
 def parse_args(argv):
     p = argparse.ArgumentParser()
     p.add_argument('--training-input', required=True)
     p.add_argument('--output', required=True)
+    p.add_argument('--config', required=True)
     p.add_argument('--shape', nargs=2, type=int)
     p.add_argument('--validation-fraction', type=float, default=0.1)
-    p.add_argument('--targets', type=int, default=3)
     p.add_argument('--structure', nargs='+', type=int, default=[60,25,20,3])
     p.add_argument('--activation', choices=['sigmoid', 'tanh', 'relu'], default='sigmoid')
     p.add_argument('--output-activation', choices=['softmax', 'linear'], default='softmax')
@@ -29,6 +29,7 @@ def parse_args(argv):
     p.add_argument('--max-epochs', type=int, default=1000)
     p.add_argument('--patience-increase', type=float, default=1.75)
     p.add_argument('--threshold', type=float, default=0.995)
+    p.add_argument('--no-normalize', action='store_true', default=False)
     p.add_argument('--verbose', default=False, action='store_true')
     return p.parse_args(argv)
 
@@ -95,8 +96,8 @@ def normalize_inplace(m,output):
 def trainNN(training_input,
             validation_fraction,
             output,
+            config,
             shape=None,
-            targets=3,
             structure=[60,25,20,3],
             activation='sigmoid',
             output_activation='softmax',
@@ -108,6 +109,7 @@ def trainNN(training_input,
             max_epochs=1000,
             patience_increase=1.75,
             threshold=0.995,
+            no_normalize=False,
             verbose=False):
 
     model = build_model(
@@ -132,9 +134,16 @@ def trainNN(training_input,
         checkpoint_callback(output, verbose)
     ]
 
-    trainX, trainY, _ = load_data(training_input, targets, shape)
+    if shape is None:
+        shape = utils.get_shape(training_input, skiprows=1)
+    data = utils.load_data_bulk(training_input, shape)
+    header = utils.get_header(training_input)
+    i_inputs, i_targets = utils.get_data_config(config, header, meta=False)
+    trainX = data[:,i_inputs]
+    trainY = data[:,i_targets]
 
-    normalize_inplace(trainX, output)
+    if not no_normalize:
+        normalize_inplace(trainX, output)
 
     model.fit(
         trainX,
@@ -153,8 +162,8 @@ def main(argv):
         args.training_input,
         args.validation_fraction,
         args.output,
+        args.config,
         args.shape,
-        args.targets,
         args.structure,
         args.activation,
         args.output_activation,
@@ -166,6 +175,7 @@ def main(argv):
         args.max_epochs,
         args.patience_increase,
         args.threshold,
+        args.no_normalize,
         args.verbose
     )
 
