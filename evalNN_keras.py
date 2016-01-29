@@ -11,6 +11,7 @@ def parse_args(argv):
     p = argparse.ArgumentParser()
     p.add_argument("--input", required=True)
     p.add_argument("--model", required=True)
+    p.add_argument("--weights", required=True)
     p.add_argument("--config", required=True)
     p.add_argument("--output", required=True)
     p.add_argument("--normalization")
@@ -60,6 +61,7 @@ def main(argv):
     i_inputs, i_targets, i_meta = utils.get_data_config(args.config, header)
     shape = utils.get_shape(args.input, skiprows=1)
     model = keras.models.model_from_yaml(open(args.model,'r').read())
+    model.load_weights(args.weights)
     data = utils.load_data_bulk(args.input, shape, extra=len(i_targets))
     norm = np.loadtxt(args.normalization) if args.normalization else None
     eval_model_inplace(model, data, i_inputs, len(i_targets), norm)
