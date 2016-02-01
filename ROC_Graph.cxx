@@ -27,7 +27,7 @@ int main(int /*argc*/, char *argv[])
 		}
 
 		FP.push_back(fp);
-		TP.push_back(tp);
+		TP.push_back(1 - tp);
 	}
 
 	TGraph roc(FP.size(), FP.data(), TP.data());
