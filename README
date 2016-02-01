@@ -66,6 +66,8 @@ ROC_Graph.cxx programs in parallel.
 
 ##### TODO ####################
 
+* Add evaluation code for AGILEPack
+* Add config files for "old" format
 * Generate static lists of SQL queries for number and position neural network ROCS
 * Write a more generic version of test-driver.sh
 * Port the position NN test code which produces residual distributions
