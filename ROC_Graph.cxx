@@ -6,8 +6,14 @@
 #include <vector>
 using std::vector;
 
-int main(int /*argc*/, char *argv[])
+int main(int argc, char *argv[])
 {
+	if (argc < 3) {
+		fprintf(stderr, "usage: %s <graph_name> <out.root> [fraction]\n", argv[0]);
+		return 1;
+	}
+
+	float f = (argc >= 4)? atof(argv[3]) : 1;
 
 	TFile outfile(argv[2], "RECREATE");
 
@@ -17,7 +23,12 @@ int main(int /*argc*/, char *argv[])
 	vector<double> TP;
 	vector<double> FP;
 
+	size_t i = 0;
+
 	while (getline(&lineptr, &len, stdin) > -1) {
+
+		if (i++ % ((size_t)(1.0/f)) != 0)
+			continue;
 
 		double fp, tp;
 
