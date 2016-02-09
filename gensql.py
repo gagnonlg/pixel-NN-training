@@ -21,16 +21,22 @@ def sql_select(selected, truth=[], layer=None, barrel=None):
         where = ("(" + truth[0] + " == 1")
         for i in range(1, len(truth)):
             where += (" OR " + truth[i] + " == 1")
-        where += ") AND "
+        where += ") "
     else:
         where = ""
 
+    wherel = ""
     if layer is None and barrel == 2:
-        where += " abs(NN_barrelEC) == 2"
+        wherel += " abs(NN_barrelEC) == 2"
     elif layer == 1 and barrel == 0:
-        where += " NN_barrelEC == 0 AND NN_layer > 0"
+        wherel += " NN_barrelEC == 0 AND NN_layer > 0"
     elif layer == 0 and barrel == 0:
-        where += " NN_barrelEC == 0 AND NN_layer == 0"
+        wherel += " NN_barrelEC == 0 AND NN_layer == 0"
+
+    if where == "":
+        where = wherel
+    elif where != "" and wherel != "":
+        where = where + " AND " + wherel
 
     sel = ""
     for s in selected:
