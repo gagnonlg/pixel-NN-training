@@ -1,42 +1,102 @@
-from copy import deepcopy
+import argparse
 import itertools
+import re
 
-template_ROC   = "SELECT %s FROM test WHERE %s ORDER BY NN_nparticles%d_PRED DESC"
-template_COUNT = "SELECT count(*) FROM test WHERE (%s) AND NN_nparticles%d_TRUTH == 1"
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument('--type', choices=['number','pos1','pos2','pos3'], required=True)
+    p.add_argument('--sizeY', default=7, type=int)
+    return p.parse_args()
 
-particle_pairs = [(1,2),(2,1),(1,3),(3,1),(2,3),(3,2)]
-layers_barrelEC = [(None,None), (0,0), (1,0), (None, 2)]
+layers = [('all', None,None), ('ibl', 0,0), ('barrel', 1,0), ('endcap', None, 2)]
+
+def sql_select(selected, truth=[], layer=None, barrel=None):
+
+    if isinstance(selected, str):
+        selected = [selected]
+    if isinstance(truth, str):
+        truth = [truth]
+
+    if len(truth) > 0:
+        where = ("(" + truth[0] + " == 1")
+        for i in range(1, len(truth)):
+            where += (" OR " + truth[i] + " == 1")
+        where += ") AND "
+    else:
+        where = ""
+
+    if layer is None and barrel == 2:
+        where += " abs(NN_barrelEC) == 2"
+    elif layer == 1 and barrel == 0:
+        where += " NN_barrelEC == 0 AND NN_layer > 0"
+    elif layer == 0 and barrel == 0:
+        where += " NN_barrelEC == 0 AND NN_layer == 0"
+
+    sel = ""
+    for s in selected:
+        sel += (s + ",")
+    sel = sel[:-1]
+
+    sql = "SELECT " + sel + " FROM test"
+    if where != "":
+        sql += " WHERE " + where
+
+    return sql + ";"
 
 
-prod = itertools.product(
-    particle_pairs,
-    layers_barrelEC
-)
+def sql_number():
 
+    ppairs = [(1,2),(2,1),(1,3),(3,1),(2,3),(3,2)]
 
-for (p,n),(l,b) in prod:
+    for ((p,n),(lname,l,b)) in itertools.product(ppairs, layers):
 
-    output  = "NN_nparticles%d_TRUTH,NN_nparticles%d_PRED" % (p,p)
-    where   = "NN_nparticles%d_TRUTH == 1 OR NN_nparticles%d_TRUTH == 1 " % (p,n)
+        countp = sql_select(
+            selected='count(*)',
+            truth=('NN_nparticles%d_TRUTH' % p),
+            layer=l,
+            barrel=b
+        )
 
-    if l is None and b == 2:
-        where += " AND abs(NN_barrelEC) == 2"
-        lname = "endcap"
-    elif l == 1 and b == 0:
-        where += " AND NN_barrelEC == 0 AND NN_layer > 0"
-        lname = "barrel"
-    elif l == 0 and b == 0:
-        where += " AND NN_barrelEC == 0 AND NN_layer == 0"
-        lname = "ibl"
-    elif l is None and b is None:
-        lname = "all"
-        pass
+        countn = sql_select(
+            selected='count(*)',
+            truth=('NN_nparticles%d_TRUTH' % n),
+            layer=l,
+            barrel=b
+        )
 
-    sql_ROC     = template_ROC % (output, where, p)
-    sql_COUNT_p = template_COUNT % (where, p)
-    sql_COUNT_n = template_COUNT % (where, n)
+        roc = sql_select(
+            selected=['NN_nparticles%d_TRUTH' % p, 'NN_nparticles%d_PRED' % p],
+            truth=['NN_nparticles%d_TRUTH' % p,'NN_nparticles%d_TRUTH' % n],
+            layer=l,
+            barrel=b
+        )
 
-    name = "ROC_%dvs%d_%s" % (p,n,lname)
+        name = "ROC_%dvs%d_%s" % (p,n,lname)
 
-    print "%s|%s|%s|%s" % (name, sql_COUNT_p, sql_COUNT_n, sql_ROC)
+        print "%s|%s|%s|%s" % (name, countp, countn, roc)
 
+def sql_position(nparticles, sizeY):
+
+    selected = ['NN_localEtaPixelIndexWeightedPosition','NN_localPhiPixelIndexWeightedPosition']
+    for i in range(sizeY):
+        selected.append('NN_pitches%d' % i)
+    for i in range(nparticles):
+        selected.append('NN_position_id_X_%d' % i)
+        selected.append('NN_position_id_Y_%d' % i)
+
+    for lname,l,b in layers:
+        name = "residuals_%s" % lname
+        sql = sql_select(
+            selected=selected,
+            layer=l,
+            barrel=b
+        )
+
+        print "%s|%s" % (name,sql)
+
+if __name__ == '__main__':
+    args = parse_args()
+    if args.type == 'number':
+        sql_number()
+    elif args.type.startswith('pos'):
+        sql_position(int(re.match('pos([123])', args.type).group(1)), args.sizeY)
