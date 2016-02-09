@@ -18,7 +18,7 @@ def parse_args(argv):
     p.add_argument('--config', required=True)
     p.add_argument('--shape', nargs=2, type=int)
     p.add_argument('--validation-fraction', type=float, default=0.1)
-    p.add_argument('--structure', nargs='+', type=int, default=[60,25,20,3])
+    p.add_argument('--structure', nargs='+', type=int, default=[25,20])
     p.add_argument('--activation', choices=['sigmoid', 'tanh', 'relu'], default='sigmoid')
     p.add_argument('--output-activation', choices=['softmax', 'linear'], default='softmax')
     p.add_argument('--l2', type=float, default=0.0000001)
@@ -98,7 +98,7 @@ def trainNN(training_input,
             output,
             config,
             shape=None,
-            structure=[60,25,20,3],
+            structure=[25,20],
             activation='sigmoid',
             output_activation='softmax',
             l2=0.0000001,
@@ -111,6 +111,16 @@ def trainNN(training_input,
             threshold=0.995,
             no_normalize=False,
             verbose=False):
+
+    if shape is None:
+        shape = utils.get_shape(training_input, skiprows=1)
+    data = utils.load_data_bulk(training_input, shape)
+    header = utils.get_header(training_input)
+    i_inputs, i_targets = utils.get_data_config(config, header, meta=False)
+    trainX = data[:,i_inputs]
+    trainY = data[:,i_targets]
+
+    structure = [len(i_inputs)] + structure + [len(i_targets)]
 
     model = build_model(
         structure,
@@ -133,14 +143,6 @@ def trainNN(training_input,
         ),
         checkpoint_callback(output, verbose)
     ]
-
-    if shape is None:
-        shape = utils.get_shape(training_input, skiprows=1)
-    data = utils.load_data_bulk(training_input, shape)
-    header = utils.get_header(training_input)
-    i_inputs, i_targets = utils.get_data_config(config, header, meta=False)
-    trainX = data[:,i_inputs]
-    trainY = data[:,i_targets]
 
     if not no_normalize:
         normalize_inplace(trainX, output)
