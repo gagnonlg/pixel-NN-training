@@ -1,0 +1,43 @@
+
+TYPE=$1
+export DB=$2
+OUTPUT=$3
+SIZEY=${4:-7}
+
+NJOBS=${NJOBS:-10}
+
+export tmp=$(mktemp -d)
+
+calc_ROC () {
+    name=$1
+    sql_count_p=$2
+    sql_count_n=$3
+    sql_ROC=$4
+
+    sqlite3 -separator " " $DB "$sql_ROC" \
+	| ./ROC $(sqlite3 $DB "$sql_count_p") $(sqlite3 $DB "$sql_count_n") \
+	| ./ROC_Graph $name $tmp/$name.root
+}
+export -f calc_ROC
+
+calc_res () {
+    name=$1
+    sql=$2
+
+    sqlite3 -separator " " $DB "$sql" \
+	| ./residuals $name $tmp/$name.root 7 1
+}
+export -f calc_res
+
+if [ $TYPE = "number" ]
+then
+    python2 gensql.py --type $TYPE \
+	| parallel -P$NJOBS --colsep '\|' calc_ROC
+else
+    python2 gensql.py --type $TYPE --sizeY $SIZEY \
+	| parallel -P$NJOBS --colsep '\|' calc_res
+fi
+
+hadd -f $OUTPUT $tmp/*.root
+
+rm -r $tmp
