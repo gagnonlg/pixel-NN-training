@@ -1,0 +1,7 @@
+*.pdf
+*.root
+*.pyc
+*.db
+ROC
+ROC_Graph
+residuals
