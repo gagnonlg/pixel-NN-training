@@ -15,8 +15,8 @@ calc_ROC () {
     sql_ROC=$4
 
     sqlite3 -separator " " $DB "$sql_ROC" \
-	| ./ROC $(sqlite3 $DB "$sql_count_p") $(sqlite3 $DB "$sql_count_n") \
-	| ./ROC_Graph $name $tmp/$name.root
+	| ROC $(sqlite3 $DB "$sql_count_p") $(sqlite3 $DB "$sql_count_n") \
+	| ROC_Graph $name $tmp/$name.root
 }
 export -f calc_ROC
 
@@ -25,7 +25,7 @@ calc_res () {
     sql=$2
 
     sqlite3 -separator " " $DB "$sql" \
-	| ./residuals $name $tmp/$name.root 7 1
+	| residuals $name $tmp/$name.root 7 1
 }
 export -f calc_res
 
