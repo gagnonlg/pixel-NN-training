@@ -77,6 +77,8 @@ def sql_number():
             barrel=b
         )
 
+        roc = roc[:-1] + (' ORDER BY NN_nparticles%d_PRED DESC;' % p)
+
         name = "ROC_%dvs%d_%s" % (p,n,lname)
 
         print "%s|%s|%s|%s" % (name, countp, countn, roc)
