@@ -17,7 +17,7 @@ def gen_inputs(sizeX, sizeY):
     for i in range(sizeY):
         fields.append("NN_pitches%d" % i)
     fields += [
-        'NN_NN_layer',
+        'NN_layer',
         'NN_barrelEC',
         'NN_phi',
         'NN_theta'
