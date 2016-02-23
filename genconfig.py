@@ -37,7 +37,7 @@ def gen_targets(type):
         fields.append('NN_nparticles3')
     return fields
 
-def gen_metadata():
+def gen_metadata(sizeY):
     fields = [
         'RunNumber',
         'EventNumber',
@@ -52,6 +52,10 @@ def gen_metadata():
         'NN_phi',
         'NN_theta',
     ]
+
+    for i in range(sizeY):
+        fields.append('NN_pitches%d' % i)
+
     return fields
 
 def main(argv):
@@ -64,7 +68,7 @@ def main(argv):
     for field in gen_targets(args.type):
         print "  - %s" % field
     print "metadata:"
-    for field in gen_metadata():
+    for field in gen_metadata(args.sizeY):
         print "  - %s" % field
 
     return 0
