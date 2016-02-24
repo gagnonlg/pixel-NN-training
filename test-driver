@@ -6,6 +6,11 @@ SIZEY=${4:-7}
 
 NJOBS=${NJOBS:-10}
 
+# Absolute path to this script. /home/user/bin/foo.sh
+SCRIPT=$(readlink -f $0)
+# Absolute path this script is in. /home/user/bin
+SCRIPTPATH=`dirname $SCRIPT`
+
 export tmp=$(mktemp -d)
 
 calc_ROC () {
@@ -31,10 +36,10 @@ export -f calc_res
 
 if [ $TYPE = "number" ]
 then
-    python2 gensql.py --type $TYPE \
+    python2 $SCRIPTPATH/gensql.py --type $TYPE \
 	| parallel -P$NJOBS --colsep '\|' calc_ROC
 else
-    python2 gensql.py --type $TYPE --sizeY $SIZEY \
+    python2 $SCRIPTPATH/gensql.py --type $TYPE --sizeY $SIZEY \
 	| parallel -P$NJOBS --colsep '\|' calc_res
 fi
 
