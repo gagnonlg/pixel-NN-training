@@ -89,8 +89,10 @@ def sql_position(nparticles, sizeY):
     for i in range(sizeY):
         selected.append('NN_pitches%d' % i)
     for i in range(nparticles):
-        selected.append('NN_position_id_X_%d' % i)
-        selected.append('NN_position_id_Y_%d' % i)
+        selected.append('NN_position_id_X_%d_TRUTH' % i)
+        selected.append('NN_position_id_X_%d_PRED' % i)
+        selected.append('NN_position_id_X_%d_TRUTH' % i)
+        selected.append('NN_position_id_X_%d_PRED' % i)
 
     for lname,l,b in layers:
         name = "residuals_%s" % lname
