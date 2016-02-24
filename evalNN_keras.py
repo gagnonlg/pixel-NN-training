@@ -28,15 +28,19 @@ def eval_model_inplace(model, data, i_inputs, ntargets, normalization=None):
              filled with the predictions
     normalization -- numpy array (shape=(2,len(<i_inputs)) with means in
                     first row and standard deviations in second.
-                    **not** performed in-place.
     i_inputs -- list with column indices of inputs for the model
     n_targets -- the number of predicted targets.
     """
 
     X = data[:,i_inputs]
     if normalization is not None:
-        X = (X - normalization[0]) / normalization[1]
+        X -= normalization[0]
+        X /= normalization[1]
     data[:,-ntargets:] = model.predict(X)
+    if normalization is not None:
+        X *= normalization[1]
+        X += normalization[0]
+
 
 def to_sql(fname, data, colnames, i_metadata, i_targets):
 
