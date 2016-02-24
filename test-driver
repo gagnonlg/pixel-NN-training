@@ -1,8 +1,8 @@
 
-TYPE=$1
+export TYPE=$1
 export DB=$2
 OUTPUT=$3
-SIZEY=${4:-7}
+export SIZEY=${4:-7}
 
 NJOBS=${NJOBS:-10}
 
@@ -30,7 +30,7 @@ calc_res () {
     sql=$2
 
     sqlite3 -separator " " $DB "$sql" \
-	| residuals $name $tmp/$name.root 7 1
+	| residuals $name $tmp/$name.root $SIZEY $(echo $TYPE | tr -d "pos")
 }
 export -f calc_res
 
