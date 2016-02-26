@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
 				acc.push_back(gsl_rstat_alloc());
 			initialized = true;
 		}
+
 		for (size_t i = 0; i < fields.size(); i++)
 			gsl_rstat_add(fields.at(i), acc.at(i));
 	}

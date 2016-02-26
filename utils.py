@@ -23,19 +23,62 @@ def load_data(path,targets,shape=None):
 
     return x,y,header
 
-def load_generator(path, batch, i_inputs, i_targets, norm):
+def calc_normalization(path, savepath=None):
+    awkscript = """
+NR==1 {
+	for (i = 1; i <= NF; i+=1) {
+		m[i] = 0
+		v[i] = 0
+	}
+}
+NR > 1 {
+	for (i = 1; i <= NF; i+=1) {
+		tmp  = m[i] + ($i - m[i]) / (NR - 1)
+		v[i] = ((NR - 2)*v[i] + ($i - m[i])*($i - tmp)) / (NR - 1)
+		m[i] = tmp
+	}
+}
+END {
+	for (i = 1; i <= NF; i+=1) {
+		printf("%f ", m[i])
+	}
+	printf("\\n")
+	for (i = 1; i <= NF; i+=1) {
+		printf("%f ", sqrt(v[i]))
+	}
+	printf("\\n")
+}
+"""
+    outp = check_output("< %s awk -F, '%s'" % (path, awkscript), shell=True)
+    lines = outp.split('\n')
+    norm = np.zeros((2,len(lines[0].split())))
+    norm[0] = np.array(lines[0].split(), dtype='float32')
+    norm[1] = np.array(lines[1].split(), dtype='float32')
+
+    if savepath is not None:
+        np.savetxt(savepath, norm)
+
+    return norm
+
+def load_generator(path, skiprows, batch, i_inputs, i_targets, norm):
+
     dataX = np.zeros((batch, ninputs))
     dataY = np.zeros((batch, ntargets))
+
+    if norm is None:
+        norm = np.zeros((2,ninputs + ntargets))
+        norm[1] = 1
+
     with open(path, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         n = 0
         while True:
             for i,row in enumerate(reader):
-                if i == 0:
+                if i <= skiprows:
                     continue
                 line = np.array(row)
-                dataX[n] = (line[i_inputs] - norm[i_inputs,0]) / norm[i_inputs,1]
-                dataY[n] = (line[i_targets] - norm[i_targets,0]) / norm[i_targets,1]
+                dataX[n] = (line[i_inputs] - norm[0,i_inputs]) / norm[1,i_inputs]
+                dataY[n] = line[i_targets]
                 n += 1
                 if n == batch:
                     n = 0
@@ -60,6 +103,8 @@ def load_data_bulk(path, shape, extra=0):
         for i,row in enumerate(reader):
             if i == 0:
                 continue
+            if i > nrow:
+                break
             data[i-1, 0:ncol] = np.array(row)
 
     return data
