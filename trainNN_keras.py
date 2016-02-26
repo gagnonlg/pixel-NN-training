@@ -50,7 +50,7 @@ def build_model(structure, regularizer, activation, output_activation,
         else:
             model.add(Activation(output_activation))
 
-    loss= 'binary_crossentropy' if output_activation == 'softmax' else 'mse'
+    loss= 'binary_crossentropy' if output_activation == 'softmax' else 'mae'
 
     model.compile(
         loss=loss,
