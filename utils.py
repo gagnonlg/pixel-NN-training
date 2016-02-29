@@ -32,7 +32,7 @@ def get_header(path):
     with open(path, 'r') as f:
         return f.readline()[:-1].split(',')
 
-def load_data_bulk(path, shape, extra=0):
+def load_data_bulk(path, shape, extra=0, i_select=None):
     nrow = shape[0]
     ncol = shape[1]
     data = np.zeros((nrow, ncol + extra))
@@ -41,7 +41,10 @@ def load_data_bulk(path, shape, extra=0):
         for i,row in enumerate(reader):
             if i == 0:
                 continue
-            data[i-1, 0:ncol] = np.array(row)
+            nprow = np.array(row)
+            if i_select is not None:
+                nprow = nprow[i_select]
+            data[i-1, 0:ncol] = nprow
 
     return data
 
