@@ -13,4 +13,7 @@
 #pragma link C++ class vector<TMatrixT<double>*,allocator<TMatrixT<double>*> >;
 #pragma link C++ class TTrainedNetwork;
 #pragma link C++ class vector<TVectorT<double>*,allocator<TVectorT<double>*> >;
+#pragma link C++ class vector<TTrainedNetwork::Input,allocator<TTrainedNetwork::Input> >;
+#pragma link C++ class TTrainedNetwork::Input;
+
 #endif
