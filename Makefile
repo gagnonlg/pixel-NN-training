@@ -1,10 +1,20 @@
+CXXFLAGS = -O2 -Wall -Wextra -std=c++11 $(shell root-config --cflags)
+ROOTLIBS = $(shell root-config --ldflags --libs)
+
 default: ROC ROC_Graph residuals
+all: default TTrainedNetwork.so
 
 residuals: residuals.cxx
-	g++ -O3 `root-config --cflags` residuals.cxx -o residuals `root-config --libs`
+	g++ $(CXXFLAGS) -o $@ $< $(ROOTLIBS)
 
 ROC_Graph: ROC_Graph.cxx
-	g++ -O3 `root-config --cflags` ROC_Graph.cxx -o ROC_Graph `root-config --libs`
+	g++ $(CXXFLAGS) -o $@ $< $(ROOTLIBS)
 
 ROC: ROC.cxx
-	g++ -O3 ROC.cxx -o ROC
+	g++ $(CXXFLAGS) -o $@ $<
+
+TTrainedNetwork.so: TTrainedNetwork.cxx TTrainedNetworkDict.cxx
+	g++ $(CXXFLAGS) -shared -fPIC -o $@ $< $(ROOTLIBS)
+
+TTrainedNetworkDict.cxx: Linkdef.h
+	rootcint -f $@ -c $<
