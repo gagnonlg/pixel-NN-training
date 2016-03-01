@@ -2,6 +2,7 @@ import argparse
 import os.path
 from keras.layers.core import Dense, Activation
 from keras.models import Sequential
+from keras.optimizers import SGD
 import numpy as np
 import ROOT
 
@@ -64,6 +65,9 @@ def build_model(struct, weights, thresholds, is_regression):
         else:
             act = 'linear' if is_regression else 'softmax'
             model.add(Activation(act))
+
+    loss = 'binary_crossentropy' if act == 'softmax' else 'mae'
+    model.compile(SGD(),loss)
     return model
 
 def get_model(path):

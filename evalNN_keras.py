@@ -10,11 +10,23 @@ import utils
 def parse_args(argv):
     p = argparse.ArgumentParser()
     p.add_argument("--input", required=True)
-    p.add_argument("--model", required=True)
-    p.add_argument("--weights", required=True)
+    p.add_argument("--model")
+    p.add_argument("--weights")
     p.add_argument("--config", required=True)
     p.add_argument("--output", required=True)
     p.add_argument("--normalization")
+    p.add_argument("--root-file")
+
+    args = p.parse_args(argv)
+
+    if (args.root_file is not None
+        and (args.model is not None or args.weights is not None or args.normalization is not None)):
+        sys.stderr.write('%s: cannot specify model, weights, normalization *and* root file\n' % sys.argv[0])
+        exit(1)
+    if args.root_file is None and (args.model is None or args.weights is None):
+        sys.stderr.write('%s: specify model and weights *or* root file\n' % sys.argv[0])
+        exit(1)
+
     return p.parse_args(argv)
 
 
@@ -59,15 +71,23 @@ def to_sql(fname, data, colnames, i_metadata, i_targets):
         proc = subprocess.Popen(['sqlite3', fname], stdin=subprocess.PIPE)
         proc.communicate(tbl + '\n' + '.separator " "\n.import %s test\n' % tmp.name)
 
+def load_model(modelp, weightsp, normp, rootfp):
+    if rootfp is not None:
+        import ttrained2keras
+        model, norm = ttrained2keras.get_model(rootfp)
+    else:
+        model = keras.models.model_from_yaml(open(modelp,'r').read())
+        model.load_weights(weightsp)
+        norm = np.loadtxt(normp) if (normp is not None) else None
+    return model, norm
+
 def main(argv):
     args = parse_args(argv)
     header = utils.get_header(args.input)
     i_inputs, i_targets, i_meta = utils.get_data_config(args.config, header)
     shape = utils.get_shape(args.input, skiprows=1)
-    model = keras.models.model_from_yaml(open(args.model,'r').read())
-    model.load_weights(args.weights)
+    model, norm = load_model(args.model, args.weights, args.normalization, args.root_file)
     data = utils.load_data_bulk(args.input, shape, extra=len(i_targets))
-    norm = np.loadtxt(args.normalization) if args.normalization else None
     eval_model_inplace(model, data, i_inputs, len(i_targets), norm)
     to_sql(args.output, data, header, i_meta, i_targets)
     return 0
