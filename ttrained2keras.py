@@ -1,5 +1,6 @@
 import argparse
 import os.path
+from keras import backend as K
 from keras.layers.core import Dense, Activation
 from keras.models import Sequential
 from keras.optimizers import SGD
@@ -55,13 +56,16 @@ def get_normalization(net):
         norm[1][i] = 1.0/s.scale
     return norm
 
+def sigmoid2(x):
+    return K.sigmoid(2*x)
+
 def build_model(struct, weights, thresholds, is_regression):
     model = Sequential()
     for i in range(1, len(struct)):
         model.add(Dense(input_dim=struct[i-1], output_dim=struct[i]))
         model.layers[-1].set_weights([weights[i-1], thresholds[i-1]])
         if i < (len(struct) - 1):
-            model.add(Activation('sigmoid'))
+            model.add(Activation(sigmoid2))
         else:
             act = 'linear' if is_regression else 'softmax'
             model.add(Activation(act))
