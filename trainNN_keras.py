@@ -114,11 +114,13 @@ def trainNN(training_input,
 
     if shape is None:
         shape = utils.get_shape(training_input, skiprows=1)
-    data = utils.load_data_bulk(training_input, shape)
+
     header = utils.get_header(training_input)
     i_inputs, i_targets = utils.get_data_config(config, header, meta=False)
-    trainX = data[:,i_inputs]
-    trainY = data[:,i_targets]
+    shape = (shape[0], len(i_inputs) + len(i_targets))
+    data = utils.load_data_bulk(training_input, shape, i_select=(i_inputs + i_targets))
+    trainX = data[:,:len(i_inputs)]
+    trainY = data[:,len(i_inputs):]
 
     structure = [len(i_inputs)] + structure + [len(i_targets)]
 
