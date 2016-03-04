@@ -84,9 +84,9 @@ def get_data_config_names(path, meta):
     return inputs, targets, metadata
 
 def get_data_config_indices(inputs, targets, metadata, header):
-    i_inputs = [i for i,col in enumerate(header) if col in inputs]
-    i_targets = [i for i,col in enumerate(header) if col in targets]
-    i_metadata = [i for i,col in enumerate(header) if col in metadata]
+    i_inputs = [header.index(col) for col in inputs]
+    i_targets = [header.index(col) for col in targets]
+    i_metadata = [header.index(col) for col in metadata]
     return i_inputs, i_targets, i_metadata
 
 def get_data_config(path, header, meta=True):
