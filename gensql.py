@@ -2,86 +2,96 @@ import argparse
 import itertools
 import re
 
+layers = [None, 'ibl', 'barrel', 'endcap']
+eta_list = [None, (0,2), (2,5), (5,10)]
+
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument('--type', choices=['number','pos1','pos2','pos3'], required=True)
     p.add_argument('--sizeY', default=7, type=int)
     return p.parse_args()
 
-layers = [('all', None,None), ('ibl', 0,0), ('barrel', 1,0), ('endcap', None, 2)]
+def name(layer, eta):
 
-def sql_select(selected, truth=[], layer=None, barrel=None):
+    if layer is None:
+        layer = 'all'
+    if eta is None:
+        eta = 'all'
+    else:
+        eta = '-'.join(map(str,eta))
 
-    if isinstance(selected, str):
-        selected = [selected]
+    return '_'.join([layer, eta])
+
+def sql_where(truth, layer=None, eta=None):
+
+    wlist = []
+
+    if layer == 'ibl':
+        wlist.append('(NN_barrelEC == 0 AND NN_layer == 0)')
+    elif layer == 'barrel':
+        wlist.append('(NN_barrelEC == 0 AND NN_layer > 0)')
+    elif layer == 'endcap':
+        wlist.append('abs(NN_barrelEC) == 2')
+
+    if eta is not None:
+        etamin, etamax = eta
+        wlist.append('(abs(NN_etaModule) >= %s AND abs(NN_etaModule) <= %s)'
+                     % (etamin,etamax))
+
     if isinstance(truth, str):
         truth = [truth]
 
     if len(truth) > 0:
-        where = ("(" + truth[0] + " == 1")
-        for i in range(1, len(truth)):
-            where += (" OR " + truth[i] + " == 1")
-        where += ") "
-    else:
-        where = ""
+        wlist.append('(' + ' OR '.join(map(lambda s: s + ' == 1', truth)) + ')')
 
-    wherel = ""
-    if layer is None and barrel == 2:
-        wherel += " abs(NN_barrelEC) == 2"
-    elif layer == 1 and barrel == 0:
-        wherel += " NN_barrelEC == 0 AND NN_layer > 0"
-    elif layer == 0 and barrel == 0:
-        wherel += " NN_barrelEC == 0 AND NN_layer == 0"
+    return ' AND '.join(wlist)
 
-    if where == "":
-        where = wherel
-    elif where != "" and wherel != "":
-        where = where + " AND " + wherel
+def sql_select(selected, truth=[], layer=None, eta=None):
 
-    sel = ""
-    for s in selected:
-        sel += (s + ",")
-    sel = sel[:-1]
+    if isinstance(selected, str):
+        selected = [selected]
 
-    sql = "SELECT " + sel + " FROM test"
-    if where != "":
-        sql += " WHERE " + where
+    sql = 'SELECT ' + ','.join(selected) + ' FROM test '
 
-    return sql + ";"
+    where = sql_where(truth, layer, eta)
+    if where != '':
+        sql += (' WHERE ' + where)
+
+    return sql + ';'
 
 
 def sql_number():
 
     ppairs = [(1,2),(2,1),(1,3),(3,1),(2,3),(3,2)]
 
-    for ((p,n),(lname,l,b)) in itertools.product(ppairs, layers):
+    for ((p,n),l,e) in itertools.product(ppairs, layers, eta_list):
 
         countp = sql_select(
             selected='count(*)',
             truth=('NN_nparticles%d_TRUTH' % p),
             layer=l,
-            barrel=b
+            eta=e
         )
 
         countn = sql_select(
             selected='count(*)',
             truth=('NN_nparticles%d_TRUTH' % n),
             layer=l,
-            barrel=b
+            eta=e
         )
 
         roc = sql_select(
             selected=['NN_nparticles%d_TRUTH' % p, 'NN_nparticles%d_PRED' % p],
             truth=['NN_nparticles%d_TRUTH' % p,'NN_nparticles%d_TRUTH' % n],
             layer=l,
-            barrel=b
+            eta=e
         )
 
         roc = roc[:-1] + (' ORDER BY NN_nparticles%d_PRED DESC;' % p)
 
-        name = "ROC_%dvs%d_%s" % (p,n,lname)
+        qname = "ROC_%dvs%d_%s" % (p,n, name(l,e))
 
-        print "%s|%s|%s|%s" % (name, countp, countn, roc)
+        print "%s|%s|%s|%s" % (qname, countp, countn, roc)
 
 def sql_position(nparticles, sizeY):
 
@@ -92,15 +102,15 @@ def sql_position(nparticles, sizeY):
         selected.append('NN_position_id_X_%d' % i)
         selected.append('NN_position_id_Y_%d' % i)
 
-    for lname,l,b in layers:
-        name = "residuals_%s" % lname
+    for l,e in itertools.product(layers,eta_list):
+        qname = "residuals_%s" % name(l,e)
         sql = sql_select(
             selected=selected,
             layer=l,
-            barrel=b
+            eta=e
         )
 
-        print "%s|%s" % (name,sql)
+        print "%s|%s" % (qname,sql)
 
 if __name__ == '__main__':
     args = parse_args()
