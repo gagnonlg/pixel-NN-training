@@ -60,31 +60,6 @@ END {
 
     return norm
 
-def load_generator(path, skiprows, batch, i_inputs, i_targets, norm):
-
-    dataX = np.zeros((batch, ninputs))
-    dataY = np.zeros((batch, ntargets))
-
-    if norm is None:
-        norm = np.zeros((2,ninputs + ntargets))
-        norm[1] = 1
-
-    with open(path, 'r') as csvfile:
-        reader = csv.reader(csvfile, delimiter=',')
-        n = 0
-        while True:
-            for i,row in enumerate(reader):
-                if i <= skiprows:
-                    continue
-                line = np.array(row)
-                dataX[n] = (line[i_inputs] - norm[0,i_inputs]) / norm[1,i_inputs]
-                dataY[n] = line[i_targets]
-                n += 1
-                if n == batch:
-                    n = 0
-                    yield (dataX, dataY)
-
-
 def get_shape(path, skiprows=0):
     nrow = int(check_output(['wc', '-l', path]).split()[0]) - skiprows
     ncol = int(check_output("head -1 %s | awk -F, '{print NF}'" % path, shell=True))
@@ -158,3 +133,14 @@ def get_data_config(path, header, meta=True):
     else:
         return ii, it
 
+def save_scale_offset(norm,output):
+    scale = norm['scale']
+    offset = norm['offset']
+    out = np.empty((2,scale.shape[0]))
+    out[0] = scale
+    out[1] = offset
+    np.savetxt(output + '.scale_offset.txt', out)
+
+def load_scale_offset(path):
+    inp = np.loadtxt(path)
+    return {'scale', inp[0], 'offset', inp[1]}

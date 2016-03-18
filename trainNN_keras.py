@@ -1,5 +1,6 @@
 import argparse
 import csv
+import logging
 import os.path
 import sys
 from keras.callbacks import ModelCheckpoint
@@ -11,6 +12,7 @@ import numpy as np
 from Profile import Profile
 from ThresholdEarlyStopping import ThresholdEarlyStopping
 import utils
+import root_utils
 
 def parse_args(argv):
     p = argparse.ArgumentParser()
@@ -30,9 +32,6 @@ def parse_args(argv):
     p.add_argument('--max-epochs', type=int, default=1000)
     p.add_argument('--patience-increase', type=float, default=1.75)
     p.add_argument('--threshold', type=float, default=0.995)
-    p.add_argument('--no-normalize', action='store_true', default=False)
-    p.add_argument('--use-generator', default=False, action='store_true')
-    p.add_argument('--normalization')
     p.add_argument('--profile', default=False, action='store_true')
     p.add_argument('--verbose', default=False, action='store_true')
     return p.parse_args(argv)
@@ -113,46 +112,32 @@ def trainNN(training_input,
             max_epochs=1000,
             patience_increase=1.75,
             threshold=0.995,
-            no_normalize=False,
-            use_generator=False,
-            normalization=None,
             profile=False,
             verbose=False):
 
-    if shape is None:
-        shape = utils.get_shape(training_input, skiprows=1)
-    header = utils.get_header(training_input)
-    i_inputs, i_targets = utils.get_data_config(config, header, meta=False)
+    branches=utils.get_data_config_names(config, meta=False)
+    norm = root_utils.scale_offset(training_input, 'NNinput', branches[0])
+    utils.save_scale_offset(norm, output)
+    norm = None
 
-    if use_generator:
+    data_generator = root_utils.generator(
+        path=training_input,
+        tree='NNinput',
+        branches=branches,
+        batch=batch,
+        norm=norm,
+        train_split=(1 - validation_fraction)
+    )
 
-        if normalization is not None:
-            norm = np.loadtxt(normalization)
-        else:
-            norm = utils.calc_normalization(training_input)
+    valid_data = root_utils.load_validation(
+        path=training_input,
+        tree='NNinput',
+        branches=branches,
+        norm=norm,
+        validation_split=validation_fraction
+    )
 
-        nvalid = int(validation_fraction * shape[0])
-
-        data_generator = utils.load_generator(
-            path=training_input,
-            skiprows=nvalid,
-            batch=batch,
-            i_inputs=i_inputs,
-            i_targets=i_targets,
-            norm=norm
-        )
-
-        valid_data = utils.load_data_bulk(training_input, (nvalid,shape[1]))
-        vX = valid_data[:,i_inputs]
-        vY = valid_data[:,i_targets]
-        valid_data = (vX,vY)
-
-    else:
-        data = utils.load_data_bulk(training_input, shape)
-        trainX = data[:,i_inputs]
-        trainY = data[:,i_targets]
-
-    structure = [len(i_inputs)] + structure + [len(i_targets)]
+    structure = [len(branches[0])] + structure + [len(branches[1])]
 
     model = build_model(
         structure,
@@ -179,33 +164,17 @@ def trainNN(training_input,
     if profile:
         callbacks.append(Profile('%s.profile.txt' % output))
 
-    if (not use_generator) and (not no_normalize):
-        if normalize is not None:
-            norm = np.loadtxt(normalization)
-        else:
-            norm=None
-        normalize_inplace(trainX, output, norm[:,i_inputs])
+    nentries = root_utils.get_entries(training_input, 'NNinput')
 
-    if use_generator:
-        model.fit_generator(
-            generator=data_generator,
-            samples_per_epoch=int(shape[0] * (1 - validation_fraction)),
-            nb_epoch=max_epochs,
-            verbose=(2 if verbose else 0),
-            callbacks=callbacks,
-            validation_data=valid_data
-        )
-    else:
-        model.fit(
-            trainX,
-            trainY,
-            batch_size=batch,
-            nb_epoch=max_epochs,
-            verbose=(2 if verbose else 0),
-            callbacks=callbacks,
-            validation_split=validation_fraction,
-            shuffle=False
-        )
+    model.fit_generator(
+        generator=data_generator,
+        samples_per_epoch=int(nentries * (1 - validation_fraction)),
+        nb_epoch=max_epochs,
+        verbose=(2 if verbose else 0),
+        callbacks=callbacks,
+        validation_data=valid_data
+    )
+
 
 def main(argv):
     args = parse_args(argv)
@@ -226,9 +195,6 @@ def main(argv):
         args.max_epochs,
         args.patience_increase,
         args.threshold,
-        args.no_normalize,
-        args.use_generator,
-        args.normalization,
         args.profile,
         args.verbose
     )
