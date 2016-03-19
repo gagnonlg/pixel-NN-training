@@ -33,6 +33,7 @@ def parse_args(argv):
     p.add_argument('--patience-increase', type=float, default=1.75)
     p.add_argument('--threshold', type=float, default=0.995)
     p.add_argument('--profile', default=False, action='store_true')
+    p.add_argument('--nbworkers', default=1, type=int)
     p.add_argument('--verbose', default=False, action='store_true')
     return p.parse_args(argv)
 
@@ -113,6 +114,7 @@ def trainNN(training_input,
             patience_increase=1.75,
             threshold=0.995,
             profile=False,
+            nbworkers=1,
             verbose=False):
 
     branches=utils.get_data_config_names(config, meta=False)
@@ -172,7 +174,8 @@ def trainNN(training_input,
         nb_epoch=max_epochs,
         verbose=(2 if verbose else 0),
         callbacks=callbacks,
-        validation_data=valid_data
+        validation_data=valid_data,
+        nb_worker=nbworkers
     )
 
 
@@ -196,6 +199,7 @@ def main(argv):
         args.patience_increase,
         args.threshold,
         args.profile,
+        args.nbworkers,
         args.verbose
     )
 
