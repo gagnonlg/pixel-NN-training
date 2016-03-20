@@ -51,7 +51,7 @@ def threadsafe_generator(f):
     return g
 
 @threadsafe_generator
-def generator(path, tree, branches, batch=32, norm=None, train_split=1):
+def generator(path, tree, branches, batch=32, norm=None, train_split=1, loop=True):
 
     tfiles = {}
     trees = {}
@@ -61,17 +61,24 @@ def generator(path, tree, branches, batch=32, norm=None, train_split=1):
     if norm is None:
         norm = {'scale': 1, 'offset': 0}
 
-    for i in it.cycle(range(0, ntrain, batch)):
+    while True:
+        for i in range(0, ntrain, batch):
 
-        thr = thread.get_ident()
+            thr = thread.get_ident()
 
-        if not thr in trees:
-            tfiles[thr] = ROOT.TFile(path, 'READ')
-            trees[thr] = tfiles[thr].Get(tree)
+            if not thr in trees:
+                tfiles[thr] = ROOT.TFile(path, 'READ')
+                trees[thr] = tfiles[thr].Get(tree)
 
-        x = root_batch(trees[thr], branches[0], i, i+batch, norm['scale'], norm['offset'])
-        y = root_batch(trees[thr], branches[1], i, i+batch, norm['scale'], norm['offset'])
-        yield (x,y)
+            x = root_batch(trees[thr], branches[0], i, i+batch, norm['scale'], norm['offset'])
+            if len(branches[1]) > 0:
+                y = root_batch(trees[thr], branches[1], i, i+batch, 1, 0)
+            else:
+                y = None
+            yield (x,y)
+
+        if not loop:
+            break
 
 # TODO change this to load_data
 def load_validation(path, tree, branches, norm, validation_split=0):

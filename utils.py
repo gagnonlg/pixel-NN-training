@@ -143,4 +143,4 @@ def save_scale_offset(norm,output):
 
 def load_scale_offset(path):
     inp = np.loadtxt(path)
-    return {'scale', inp[0], 'offset', inp[1]}
+    return {'scale': inp[0], 'offset': inp[1]}

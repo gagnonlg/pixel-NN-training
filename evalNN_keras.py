@@ -1,4 +1,7 @@
 import argparse
+import itertools as it
+import root_utils
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -14,7 +17,7 @@ def parse_args(argv):
     p.add_argument("--weights", required=True)
     p.add_argument("--config", required=True)
     p.add_argument("--output", required=True)
-    p.add_argument("--normalization")
+    p.add_argument("--scale-offset", required=True)
     return p.parse_args(argv)
 
 
@@ -55,17 +58,102 @@ def to_sql(fname, data, colnames, i_metadata, i_targets):
         proc = subprocess.Popen(['sqlite3', fname], stdin=subprocess.PIPE)
         proc.communicate(tbl + '\n' + '.separator " "\n.import %s test\n' % tmp.name)
 
+def insert_into_db(db, meta, y_truth, y_pred):
+
+    mcol = meta.shape[1]
+    ycol = y_truth.shape[1]
+
+    nrow = meta.shape[0]
+    ncol = mcol + 2*ycol
+
+    meta_begin = 0
+    meta_end = meta_begin + mcol
+    truth_begin = meta_end
+    truth_end = truth_begin + ycol
+    pred_begin = truth_end
+    pred_end = pred_begin + ycol
+
+    data = np.empty((nrow, ncol))
+    data[:,meta_begin:meta_end] = meta
+    data[:,truth_begin:truth_end] = y_truth
+    data[:,pred_begin:pred_end] = y_pred
+
+    sql = 'INSERT INTO test VALUES ('
+    sql += ','.join(['?'] * ncol)
+    sql += ')'
+
+    c = db.cursor()
+    c.executemany(sql, data)
+
+def prepare_db(db, meta_branches, y_branches):
+    cur = db.cursor()
+    cur.execute('DROP TABLE IF EXISTS test')
+    sql  = 'CREATE TABLE test ('
+    sql += ','.join(map(lambda s: s + ' REAL', meta_branches))
+    sql += ','
+    sql += ','.join(map(lambda s: s + '_TRUTH REAL', y_branches))
+    sql += ','
+    sql += ','.join(map(lambda s: s + '_PRED REAL', y_branches))
+    sql += ')'
+    cur.execute(sql)
+    db.commit()
+
+def eval_dataset(model,
+                 path,
+                 tree,
+                 branches,
+                 meta_branches,
+                 norm,
+                 dbpath,
+                 batch=128):
+
+    db = sqlite3.connect(dbpath)
+    prepare_db(
+        db=db,
+        meta_branches=meta_branches,
+        y_branches=branches[1]
+    )
+
+    data_generator = root_utils.generator(
+        path,
+        tree=tree,
+        branches=branches,
+        batch=batch,
+        norm=norm,
+        loop=False
+    )
+
+    meta_generator = root_utils.generator(
+        path,
+        tree=tree,
+        branches=(meta_branches,[]),
+        batch=batch,
+        norm=None,
+        loop=False
+    )
+
+    for (x, y), (meta,_) in it.izip(data_generator,meta_generator):
+        ypred = model.predict(x, batch_size=x.shape[0])
+        insert_into_db(db, meta, y, ypred)
+
+    db.commit()
+
 def main(argv):
     args = parse_args(argv)
-    header = utils.get_header(args.input)
-    i_inputs, i_targets, i_meta = utils.get_data_config(args.config, header)
-    shape = utils.get_shape(args.input, skiprows=1)
+    inputs, targets, meta = utils.get_data_config_names(args.config, meta=True)
     model = keras.models.model_from_yaml(open(args.model,'r').read())
     model.load_weights(args.weights)
-    data = utils.load_data_bulk(args.input, shape, extra=len(i_targets))
-    norm = np.loadtxt(args.normalization) if args.normalization else None
-    eval_model_inplace(model, data, i_inputs, len(i_targets), norm)
-    to_sql(args.output, data, header, i_meta, i_targets)
+
+    eval_dataset(
+        model=model,
+        path=args.input,
+        tree='NNinput',
+        branches=(inputs,targets),
+        meta_branches=meta,
+        norm=utils.load_scale_offset(args.scale_offset),
+        dbpath=args.output
+    )
+
     return 0
 
 if __name__ == '__main__':
