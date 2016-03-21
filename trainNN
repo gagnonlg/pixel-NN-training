@@ -1,0 +1,48 @@
+import argparse
+
+from train_nn import train_nn
+
+if __name__ == '__main__':
+
+    p = argparse.ArgumentParser()
+    p.add_argument('--training-input', required=True)
+    p.add_argument('--output', required=True)
+    p.add_argument('--config', required=True)
+    p.add_argument('--validation-fraction', type=float, default=0.1)
+    p.add_argument('--structure', nargs='+', type=int, default=[25, 20])
+    p.add_argument('--activation', choices=['sigmoid', 'tanh', 'relu'], default='sigmoid')
+    p.add_argument('--output-activation', choices=['softmax', 'linear'], default='softmax')
+    p.add_argument('--l2', type=float, default=0.0000001)
+    p.add_argument('--learning-rate', type=float, default=0.08)
+    p.add_argument('--momentum', type=float, default=0.4)
+    p.add_argument('--batch', type=int, default=60)
+    p.add_argument('--min-epochs', type=int, default=10)
+    p.add_argument('--max-epochs', type=int, default=1000)
+    p.add_argument('--patience-increase', type=float, default=1.75)
+    p.add_argument('--threshold', type=float, default=0.995)
+    p.add_argument('--profile', default=False, action='store_true')
+    p.add_argument('--nbworkers', default=1, type=int)
+    p.add_argument('--verbose', default=False, action='store_true')
+
+    args = p.parse_args()
+
+    train_nn(
+        args.training_input,
+        args.validation_fraction,
+        args.output,
+        args.config,
+        args.structure,
+        args.activation,
+        args.output_activation,
+        args.l2,
+        args.learning_rate,
+        args.momentum,
+        args.batch,
+        args.min_epochs,
+        args.max_epochs,
+        args.patience_increase,
+        args.threshold,
+        args.profile,
+        args.nbworkers,
+        args.verbose
+    )
