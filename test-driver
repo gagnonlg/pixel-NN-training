@@ -1,10 +1,15 @@
 
-TYPE=$1
+export TYPE=$1
 export DB=$2
 OUTPUT=$3
-SIZEY=${4:-7}
+export SIZEY=${4:-7}
 
 NJOBS=${NJOBS:-10}
+
+# Absolute path to this script. /home/user/bin/foo.sh
+SCRIPT=$(readlink -f $0)
+# Absolute path this script is in. /home/user/bin
+SCRIPTPATH=`dirname $SCRIPT`
 
 export tmp=$(mktemp -d)
 
@@ -25,16 +30,16 @@ calc_res () {
     sql=$2
 
     sqlite3 -separator " " $DB "$sql" \
-	| residuals $name $tmp/$name.root 7 1
+	| residuals $name $tmp/$name.root $SIZEY $(echo $TYPE | tr -d "pos")
 }
 export -f calc_res
 
 if [ $TYPE = "number" ]
 then
-    python2 gensql.py --type $TYPE \
+    python2 $SCRIPTPATH/gensql.py --type $TYPE \
 	| parallel -P$NJOBS --colsep '\|' calc_ROC
 else
-    python2 gensql.py --type $TYPE --sizeY $SIZEY \
+    python2 $SCRIPTPATH/gensql.py --type $TYPE --sizeY $SIZEY \
 	| parallel -P$NJOBS --colsep '\|' calc_res
 fi
 

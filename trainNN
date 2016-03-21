@@ -1,6 +1,6 @@
 import argparse
 
-from train_nn import train_nn
+from trainNN_keras import train_nn
 
 if __name__ == '__main__':
 

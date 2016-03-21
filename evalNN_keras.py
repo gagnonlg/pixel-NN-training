@@ -41,8 +41,6 @@ def eval_nn(inputp,
         dbpath=output
     )
 
-    return 0
-
 
 def _eval_dataset(model,
                   path,

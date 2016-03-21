@@ -1,6 +1,6 @@
 import argparse
 
-from eval_nn import eval_nn
+from evalNN_keras import eval_nn
 
 if __name__ == '__main__':
 

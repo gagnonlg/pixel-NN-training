@@ -32,7 +32,7 @@ def build_model(structure,
         else:
             model.add(Activation(activations[1]))
 
-    loss = 'binary_crossentropy' if activations[1] == 'softmax' else 'mse'
+    loss= 'binary_crossentropy' if output_activation == 'softmax' else 'mae'
 
     model.compile(
         loss=loss,
@@ -66,6 +66,7 @@ def checkpoint_callback(filepath, verbose):
         verbose=verbose
     )
 
+<<<<<<< HEAD
 
 def normalize_inplace(data, output, stats=None):
 
