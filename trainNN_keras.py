@@ -66,21 +66,6 @@ def checkpoint_callback(filepath, verbose):
         verbose=verbose
     )
 
-<<<<<<< HEAD
-
-def normalize_inplace(data, output, stats=None):
-
-    if stats is None:
-        stats = np.zeros((2, data.shape[1]))
-        stats[0] = data.mean(axis=0)
-        stats[1] = data.std(axis=0)
-        np.savetxt(output + '.normalization.txt', stats)
-
-    data -= stats[0]
-    data /= stats[1]
-
-    return data
-
 
 def train_nn(training_input,
              validation_fraction,
