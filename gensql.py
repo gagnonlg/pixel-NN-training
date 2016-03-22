@@ -35,7 +35,7 @@ def sql_where(truth, layer=None, eta=None):
 
     if eta is not None:
         etamin, etamax = eta
-        wlist.append('(abs(NN_etaModule) >= %s AND abs(NN_etaModule) <= %s)'
+        wlist.append('(abs(globalEta) >= %s AND abs(globalEta) <= %s)'
                      % (etamin,etamax))
 
     if isinstance(truth, str):
