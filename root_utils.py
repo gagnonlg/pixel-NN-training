@@ -128,7 +128,7 @@ def load_validation(path, tree, branches, norm, validation_split=0):
         tree=tree,
         branches=branches[1],
         bounds=(start, nentries),
-        scale_offset=(norm['scale'], norm['offset'])
+        scale_offset=(1, 0)
     )
 
     return xdat, ydat
