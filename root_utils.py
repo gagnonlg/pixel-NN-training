@@ -14,7 +14,7 @@ def calc_scale_offset(path, tree, branches):
     for i, branch in enumerate(branches):
         arr = rnp.tree2array(tree, branches=branch)
         offset[i] = -np.mean(arr)
-        scales[i] = -np.std(arr)
+        scales[i] = 1.0/np.std(arr)
     return {'scale': scales, 'offset': offset}
 
 
