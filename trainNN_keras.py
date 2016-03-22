@@ -90,7 +90,6 @@ def train_nn(training_input,
     branches = utils.get_data_config_names(config, meta=False)
     norm = root_utils.calc_scale_offset(training_input, 'NNinput', branches[0])
     utils.save_scale_offset(norm, output)
-    norm = None
 
     data_generator = root_utils.generator(
         path=training_input,
