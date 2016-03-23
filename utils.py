@@ -37,15 +37,15 @@ def get_data_config_names(path, meta):
     return inputs, targets, metadata
 
 
-def save_scale_offset(norm, output):
-    scale = norm['scale']
-    offset = norm['offset']
-    out = np.empty((2, scale.shape[0]))
-    out[0] = scale
-    out[1] = offset
-    np.savetxt(output + '.scale_offset.txt', out)
+def save_normalization(norm, output):
+    mean = norm['mean']
+    std = norm['std']
+    out = np.empty((2, std.shape[0]))
+    out[0] = mean
+    out[1] = std
+    np.savetxt(output + '.normalization.txt', out)
 
 
-def load_scale_offset(path):
+def load_normalization(path):
     inp = np.loadtxt(path)
-    return {'scale': inp[0], 'offset': inp[1]}
+    return {'mean': inp[0], 'std': inp[1]}

@@ -11,7 +11,7 @@ if __name__ == '__main__':
     p.add_argument("--weights", required=True)
     p.add_argument("--config", required=True)
     p.add_argument("--output", required=True)
-    p.add_argument("--scale-offset", required=True)
+    p.add_argument("--normalization", required=True)
 
     args = p.parse_args()
 
@@ -21,7 +21,7 @@ if __name__ == '__main__':
         args.weights,
         args.config,
         args.output,
-        args.scale_offset
+        args.normalization
     )
 
 

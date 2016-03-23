@@ -17,7 +17,7 @@ def eval_nn(inputp,
             weights,
             config,
             output,
-            scale_offset): \
+            normalization): \
             # pylint: disable=too-many-arguments
     """ evaluate a dataset  with a neural network stored on disk
 
@@ -27,7 +27,7 @@ def eval_nn(inputp,
     weights -- path to the hdf5 weights file
     config -- path to the branches config file
     output -- output name for the sqlite database (overwrites the 'test' table)
-    scale_offset -- path to the txt file with normalization constants
+    normalization -- path to the txt file with normalization constants
     """
     model = keras.models.model_from_yaml(open(model, 'r').read())
     model.load_weights(weights)
@@ -37,7 +37,7 @@ def eval_nn(inputp,
         path=inputp,
         tree='NNinput',
         branches=utils.get_data_config_names(config, meta=True),
-        norm=utils.load_scale_offset(scale_offset),
+        norm=utils.load_normalization(normalization),
         dbpath=output
     )
 
@@ -63,7 +63,7 @@ def _eval_dataset(model,
         tree=tree,
         branches=branches[:2],
         batch=batch,
-        norm=norm,
+        normalization=norm,
         loop=False
     )
 
@@ -72,7 +72,7 @@ def _eval_dataset(model,
         tree=tree,
         branches=(branches[2], []),
         batch=batch,
-        norm=None,
+        normalization=None,
         loop=False
     )
 

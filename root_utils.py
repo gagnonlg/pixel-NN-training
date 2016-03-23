@@ -6,20 +6,20 @@ import ROOT
 import root_numpy as rnp
 
 
-def calc_scale_offset(path, tree, branches):
+def calc_normalization(path, tree, branches):
     tfile = ROOT.TFile(path, 'READ')
     tree = tfile.Get(tree)
-    offset = np.zeros(len(branches))
-    scales = np.ones(len(branches))
+    mean = np.zeros(len(branches))
+    std = np.ones(len(branches))
     for i, branch in enumerate(branches):
         arr = rnp.tree2array(tree, branches=branch)
-        offset[i] = -np.mean(arr)
-        scales[i] = 1.0/np.std(arr)
-    return {'scale': scales, 'offset': offset}
+        mean[i] = np.mean(arr)
+        std[i] = np.std(arr)
+    return {'std': std, 'mean': mean}
 
 
 # http://stackoverflow.com/questions/5957380/convert-structured-array-to-regular-numpy-array
-def root_batch(tree, branches, bounds, scale_offset):
+def root_batch(tree, branches, bounds, normalization):
     batch = rnp.tree2array(
         tree=tree,
         branches=branches,
@@ -27,8 +27,8 @@ def root_batch(tree, branches, bounds, scale_offset):
         stop=bounds[1]
     )
     batch = batch.view(np.float64).reshape(batch.shape + (-1,))
-    batch *= scale_offset[0]
-    batch += scale_offset[1]
+    batch -= normalization['mean']
+    batch *= (1.0/normalization['std'])
     return batch
 
 
@@ -63,7 +63,7 @@ def generator(path,
               tree,
               branches,
               batch=32,
-              norm=None,
+              normalization=None,
               train_split=1,
               loop=True): \
               # pylint: disable=too-many-arguments
@@ -73,8 +73,8 @@ def generator(path,
 
     ntrain = int(train_split * get_entries(path, tree))
 
-    if norm is None:
-        norm = {'scale': 1, 'offset': 0}
+    if normalization is None:
+        normalization = {'std': 1, 'mean': 0}
 
     while True:
         for i in range(0, ntrain, batch):
@@ -89,7 +89,7 @@ def generator(path,
                 tree=trees[thr],
                 branches=branches[0],
                 bounds=(i, i+batch),
-                scale_offset=(norm['scale'], norm['offset'])
+                normalization=normalization
             )
 
             if len(branches[1]) > 0:
@@ -97,7 +97,7 @@ def generator(path,
                     tree=trees[thr],
                     branches=branches[1],
                     bounds=(i, i+batch),
-                    scale_offset=(1, 0)
+                    normalization={'mean': 0, 'std': 1}
                 )
             else:
                 ybatch = None
@@ -107,13 +107,13 @@ def generator(path,
             break
 
 
-def load_validation(path, tree, branches, norm, validation_split=0):
+def load_validation(path, tree, branches, normalization, validation_split=0):
 
     tfile = ROOT.TFile(path, 'READ')
     tree = tfile.Get(tree)
 
-    if norm is None:
-        norm = {'scale': 1, 'offset': 0}
+    if normalization is None:
+        normalization = {'std': 1, 'mean': 0}
 
     nentries = tree.GetEntries()
     start = int(nentries * (1 - validation_split))
@@ -122,13 +122,13 @@ def load_validation(path, tree, branches, norm, validation_split=0):
         tree=tree,
         branches=branches[0],
         bounds=(start, nentries),
-        scale_offset=(norm['scale'], norm['offset'])
+        normalization=normalization,
     )
     ydat = root_batch(
         tree=tree,
         branches=branches[1],
         bounds=(start, nentries),
-        scale_offset=(1, 0)
+        normalization={'mean': 0, 'std': 1}
     )
 
     return xdat, ydat

@@ -88,15 +88,15 @@ def train_nn(training_input,
             # pylint: disable=too-many-arguments,too-many-locals,dangerous-default-value
 
     branches = utils.get_data_config_names(config, meta=False)
-    norm = root_utils.calc_scale_offset(training_input, 'NNinput', branches[0])
-    utils.save_scale_offset(norm, output)
+    norm = root_utils.calc_normalization(training_input, 'NNinput', branches[0])
+    utils.save_normalization(norm, output)
 
     data_generator = root_utils.generator(
         path=training_input,
         tree='NNinput',
         branches=branches,
         batch=batch,
-        norm=norm,
+        normalization=norm,
         train_split=(1 - validation_fraction)
     )
 
@@ -104,7 +104,7 @@ def train_nn(training_input,
         path=training_input,
         tree='NNinput',
         branches=branches,
-        norm=norm,
+        normalization=norm,
         validation_split=validation_fraction
     )
 
