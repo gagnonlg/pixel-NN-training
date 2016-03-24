@@ -127,9 +127,6 @@ def to_keras(ttrained):
 
 def _build_model(struct, weights, thresholds, is_regression):
 
-    def sigmoid2(x):
-        return K.sigmoid(2*x)
-
     model = Sequential()
 
     for i in range(1, len(struct)):
@@ -137,7 +134,7 @@ def _build_model(struct, weights, thresholds, is_regression):
         model.layers[-1].set_weights([weights[i-1], thresholds[i-1]])
 
         if i < (len(struct) - 1):
-            model.add(Activation(sigmoid2))
+            model.add(Activation('sigmoid'))
         else:
             act = 'linear' if is_regression else 'softmax'
             model.add(Activation(act))
