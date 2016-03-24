@@ -51,6 +51,10 @@ def gen_metadata(sizeY):
         'NN_etaModule',
         'NN_phi',
         'NN_theta',
+        'globalX',
+        'globalY',
+        'globalZ',
+        'globalEta'
     ]
 
     for i in range(sizeY):

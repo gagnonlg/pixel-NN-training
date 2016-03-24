@@ -1,97 +1,152 @@
+""" eval_nn: module to evaluate a dataset using a neural network """
+
 import argparse
-import subprocess
-import sys
-import tempfile
+import itertools as it
+import sqlite3
+
 import keras.models
 import numpy as np
+
 import utils
+import root_utils
+
+__all__ = ['eval_nn']
 
 
-def parse_args(argv):
-    p = argparse.ArgumentParser()
-    p.add_argument("--input", required=True)
-    p.add_argument("--model")
-    p.add_argument("--weights")
-    p.add_argument("--config", required=True)
-    p.add_argument("--output", required=True)
-    p.add_argument("--normalization")
-    p.add_argument("--root-file")
+def eval_nn(inputp,
+            model,
+            weights,
+            config,
+            output,
+            normalization): \
+            # pylint: disable=too-many-arguments
+    """ evaluate a dataset  with a neural network stored on disk
 
-    args = p.parse_args(argv)
-
-    if (args.root_file is not None
-        and (args.model is not None or args.weights is not None or args.normalization is not None)):
-        sys.stderr.write('%s: cannot specify model, weights, normalization *and* root file\n' % sys.argv[0])
-        exit(1)
-    if args.root_file is None and (args.model is None or args.weights is None):
-        sys.stderr.write('%s: specify model and weights *or* root file\n' % sys.argv[0])
-        exit(1)
-
-    return p.parse_args(argv)
-
-
-def eval_model_inplace(model, data, i_inputs, ntargets, normalization=None):
+    arguments:
+    inputp -- path to the ROOT dataset
+    model -- path to the yaml keras model config file
+    weights -- path to the hdf5 weights file
+    config -- path to the branches config file
+    output -- output name for the sqlite database (overwrites the 'test' table)
+    normalization -- path to the txt file with normalization constants
     """
-    evaluate a dataset with the given model and store the results in-place in data array
+    model = keras.models.model_from_yaml(open(model, 'r').read())
+    model.load_weights(weights)
 
-    model -- the keras model to be used for evaluation
-    data  -- the numpy array containing the dataset. It is assumed that the
-             last <n_targets> columns are place-holders that are to be
-             filled with the predictions
-    normalization -- numpy array (shape=(2,len(<i_inputs)) with means in
-                    first row and standard deviations in second.
-    i_inputs -- list with column indices of inputs for the model
-    n_targets -- the number of predicted targets.
-    """
-
-    X = data[:,i_inputs]
-    if normalization is not None:
-        X -= normalization[0]
-        X /= normalization[1]
-    data[:,-ntargets:] = model.predict(X)
-    if normalization is not None:
-        X *= normalization[1]
-        X += normalization[0]
+    _eval_dataset(
+        model=model,
+        path=inputp,
+        tree='NNinput',
+        branches=utils.get_data_config_names(config, meta=True),
+        norm=utils.load_normalization(normalization),
+        dbpath=output
+    )
 
 
-def to_sql(fname, data, colnames, i_metadata, i_targets):
+def _eval_dataset(model,
+                  path,
+                  tree,
+                  branches,
+                  norm,
+                  dbpath,
+                  batch=128): \
+                  # pylint: disable=too-many-arguments
 
-    tbl = "CREATE TABLE test ("
-    for c in [h for (i,h) in enumerate(colnames) if  i in i_metadata]:
-        tbl += "%s REAL, " % c
-    for c in [h for (i,h) in enumerate(colnames) if  i in i_targets]:
-        tbl += "%s_TRUTH REAL, " % c
-    for c in [h for (i,h) in enumerate(colnames) if  i in i_targets]:
-        tbl += "%s_PRED REAL," % c
-    tbl = tbl[:-1] + ");"
+    dbconn = sqlite3.connect(dbpath)
+    _prepare_db(
+        dbconn=dbconn,
+        meta_branches=branches[2],
+        y_branches=branches[1]
+    )
 
-    i_pred = range(data.shape[1] - len(i_targets), data.shape[1])
-    with tempfile.NamedTemporaryFile() as tmp:
-        np.savetxt(tmp.name,data[:, i_metadata + i_targets + i_pred])
-        proc = subprocess.Popen(['sqlite3', fname], stdin=subprocess.PIPE)
-        proc.communicate(tbl + '\n' + '.separator " "\n.import %s test\n' % tmp.name)
+    data_generator = root_utils.generator(
+        path,
+        tree=tree,
+        branches=branches[:2],
+        batch=batch,
+        normalization=norm,
+        loop=False
+    )
 
-def load_model(modelp, weightsp, normp, rootfp):
-    if rootfp is not None:
-        import ttrained2keras
-        model, norm = ttrained2keras.get_model(rootfp)
-    else:
-        model = keras.models.model_from_yaml(open(modelp,'r').read())
-        model.load_weights(weightsp)
-        norm = np.loadtxt(normp) if (normp is not None) else None
-    return model, norm
+    meta_generator = root_utils.generator(
+        path,
+        tree=tree,
+        branches=(branches[2], []),
+        batch=batch,
+        normalization=None,
+        loop=False
+    )
 
-def main(argv):
-    args = parse_args(argv)
-    header = utils.get_header(args.input)
-    i_inputs, i_targets, i_meta = utils.get_data_config(args.config, header)
-    shape = utils.get_shape(args.input, skiprows=1)
-    model, norm = load_model(args.model, args.weights, args.normalization, args.root_file)
-    data = utils.load_data_bulk(args.input, shape, extra=len(i_targets))
-    eval_model_inplace(model, data, i_inputs, len(i_targets), norm)
-    to_sql(args.output, data, header, i_meta, i_targets)
-    return 0
+    for (xbatch, ybatch), (meta, _) in it.izip(data_generator, meta_generator):
+        _insert_into_db(
+            dbconn,
+            meta,
+            y_truth=ybatch,
+            y_pred=model.predict(xbatch, batch_size=xbatch.shape[0])
+        )
+
+    dbconn.commit()
+
+
+def _insert_into_db(dbconn, meta, y_truth, y_pred):
+
+    mcol = meta.shape[1]
+    ycol = y_truth.shape[1]
+
+    shape = (meta.shape[0], mcol + 2*ycol)
+
+    meta_begin = 0
+    meta_end = meta_begin + mcol
+    truth_begin = meta_end
+    truth_end = truth_begin + ycol
+    pred_begin = truth_end
+    pred_end = pred_begin + ycol
+
+    data = np.empty(shape)
+    data[:, meta_begin:meta_end] = meta
+    data[:, truth_begin:truth_end] = y_truth
+    data[:, pred_begin:pred_end] = y_pred
+
+    sql = 'INSERT INTO test VALUES ('
+    sql += ','.join(['?'] * shape[1])
+    sql += ')'
+
+    dbconn.executemany(sql, data)
+
+
+def _prepare_db(dbconn, meta_branches, y_branches):
+
+    dbconn.execute('DROP TABLE IF EXISTS test')
+    sql = 'CREATE TABLE test ('
+    sql += ','.join([br + ' REAL' for br in meta_branches])
+    sql += ','
+    sql += ','.join([br + '_TRUTH REAL' for br in y_branches])
+    sql += ','
+    sql += ','.join([br + '_PRED REAL' for br in y_branches])
+    sql += ')'
+    dbconn.execute(sql)
+    dbconn.commit()
+
+
+def _main():
+    parse = argparse.ArgumentParser()
+    parse.add_argument("--input", required=True)
+    parse.add_argument("--model", required=True)
+    parse.add_argument("--weights", required=True)
+    parse.add_argument("--config", required=True)
+    parse.add_argument("--output", required=True)
+    parse.add_argument("--normalization", required=True)
+    args = parse.parse_args()
+
+    eval_nn(
+        args.input,
+        args.model,
+        args.weights,
+        args.config,
+        args.output,
+        args.normalization
+    )
+
 
 if __name__ == '__main__':
-    exit(main(sys.argv[1:]))
-
+    _main()
