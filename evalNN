@@ -1,0 +1,27 @@
+#!/bin/env python2
+import argparse
+
+from evalNN_keras import eval_nn
+
+if __name__ == '__main__':
+
+    p = argparse.ArgumentParser()
+    p.add_argument("--input", required=True)
+    p.add_argument("--model", required=True)
+    p.add_argument("--weights", required=True)
+    p.add_argument("--config", required=True)
+    p.add_argument("--output", required=True)
+    p.add_argument("--normalization", required=True)
+
+    args = p.parse_args()
+
+    eval_nn(
+        args.input,
+        args.model,
+        args.weights,
+        args.config,
+        args.output,
+        args.normalization
+    )
+
+
