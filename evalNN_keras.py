@@ -1,5 +1,6 @@
 """ eval_nn: module to evaluate a dataset using a neural network """
 
+import argparse
 import itertools as it
 import sqlite3
 
@@ -125,3 +126,27 @@ def _prepare_db(dbconn, meta_branches, y_branches):
     sql += ')'
     dbconn.execute(sql)
     dbconn.commit()
+
+
+def _main():
+    parse = argparse.ArgumentParser()
+    parse.add_argument("--input", required=True)
+    parse.add_argument("--model", required=True)
+    parse.add_argument("--weights", required=True)
+    parse.add_argument("--config", required=True)
+    parse.add_argument("--output", required=True)
+    parse.add_argument("--normalization", required=True)
+    args = parse.parse_args()
+
+    eval_nn(
+        args.input,
+        args.model,
+        args.weights,
+        args.config,
+        args.output,
+        args.normalization
+    )
+
+
+if __name__ == '__main__':
+    _main()
