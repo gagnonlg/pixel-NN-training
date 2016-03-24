@@ -11,8 +11,8 @@ installation instruction at http://keras.io
 
 Here are the options to the script:
 $ python2 trainNN_keras.py --help
-usage: trainNN_keras.py [-h] --training-input TRAINING_INPUT --output OUTPUT
-                        --config CONFIG [--shape SHAPE SHAPE]
+  usage: trainNN_keras.py [-h] --training-input TRAINING_INPUT --output OUTPUT
+                        --config CONFIG
                         [--validation-fraction VALIDATION_FRACTION]
                         [--structure STRUCTURE [STRUCTURE ...]]
                         [--activation {sigmoid,tanh,relu}]
@@ -21,18 +21,29 @@ usage: trainNN_keras.py [-h] --training-input TRAINING_INPUT --output OUTPUT
                         [--batch BATCH] [--min-epochs MIN_EPOCHS]
                         [--max-epochs MAX_EPOCHS]
                         [--patience-increase PATIENCE_INCREASE]
-                        [--threshold THRESHOLD] [--no-normalize] [--verbose]
+                        [--threshold THRESHOLD] [--profile]
+                        [--nbworkers NBWORKERS] [--verbose]
 
-Refer to the "parse_args" function at the top of the script for the
-default values. The config files is used to tell the scripts which
-variables are the inputs and which are the targets. It's also used to
-specify which variable are metadata to be saved by the evalNN script -
-this block is ignored when training. See the example number.config.txt.
+Refer to the _main() function at the bottom of the script for the
+default values, and the train_nn() function docstring for more
+documentation on the arguments.
+
+The config files is used to tell the scripts which variables are the
+inputs and which are the targets. It's also used to specify which
+variable are metadata to be saved by the evalNN script - this block is
+ignored when training. They are generated using the genconfig.py
+script:
+
+$ python2 genconfig.py --help
+usage: genconfig.py [-h] [--sizeX SIZEX] [--sizeY SIZEY] --type
+                    {number,pos1,pos2,pos3} [--old]
+
+Workflow:
 
 $ setupATLAS
 $ lsetup root
 $ python2 trainNN_keras.py --training-input $INPUT --output test  \
-    --config number.config.txt
+    --config <(python2 genconfig.py --type number)
 
 This should create the following files:
 test.model.yaml
@@ -46,30 +57,22 @@ to calculate different metrics.
 
 $ python2 evalNN_keras.py --help
 usage: evalNN_keras.py [-h] --input INPUT --model MODEL --weights WEIGHTS
-                       --config CONFIG --output OUTPUT
-                       [--normalization NORMALIZATION]
+                       --config CONFIG --output OUTPUT --normalization
+                       NORMALIZATION
 
 The --config file is the same as for the training script, but the
 metadata block is saved in the ouput database.
 
 $ python2 evalNN_keras.py --input $TEST_INPUT --model test.model.yaml \
     --weights test.weights.hdf5 --normalization test.normalization.txt \
-    --output test.db --config number.config.txt
+    --output test.db --config <(python2 genconfig.py --type number)
 
-This should create an sqlite3 database at "test.db".
+This should create an sqlite3 database at "test.db", which can then be
+input to the test-driver script which will create validation plots:
 
-If you are evaluating the number network, you would then produce ROC
-curves. See the "test-driver.sh" script for an example of how I do
-it. In short, it uses a python script to generate all the sql queries
-to extract subsets of clusters and feeds them to the ROC.cxx and
-ROC_Graph.cxx programs in parallel.
+$ test-driver number test.db test.root
 
 ##### TODO ####################
 
-* Add evaluation code for AGILEPack
-* Add config files for "old" format
-* Generate static lists of SQL queries for number and position neural network ROCS
-* Write a more generic version of test-driver.sh
-* Port the position NN test code which produces residual distributions
 * Add script to randomly generate NN hyperparameters configurations
 * Add driver script for optimization
