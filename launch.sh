@@ -13,7 +13,8 @@ set -e
 
 if [ $TYPE = "number" ]
 then
-trainNN	--training-input $TRAINING \
+    python2 ./pixel-NN-training/trainNN	\
+	--training-input $TRAINING \
 	--output $NAME \
         --config <(python2 pixel-NN-training/genconfig.py --type $TYPE --sizeX $SIZEX --sizeY $SIZEY) \
         --structure 25 20 \
@@ -24,7 +25,8 @@ trainNN	--training-input $TRAINING \
 	--batch 60 \
 	--verbose
 else
-trainNN	--training-input $TRAINING \
+    python2 ./pixel-NN-training/trainNN \
+	--training-input $TRAINING \
 	--output $NAME \
 	--config <(python2 pixel-NN-training/genconfig.py --type $TYPE --sizeX $SIZEX --sizeY $SIZEY) \
         --structure 40 20 \
