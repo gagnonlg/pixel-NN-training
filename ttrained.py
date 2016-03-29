@@ -113,19 +113,23 @@ def _array_to_tvector(arr):
     return tvec
 
 
-def to_keras(ttrained):
+def to_keras(ttrained, sigmoid2=False):
 
     model = _build_model(
         struct=_tt_get_struct(ttrained),
         weights=_tt_get_weights(ttrained),
         thresholds=_tt_get_thresholds(ttrained),
-        is_regression=ttrained.getIfLinearOutput()
+        is_regression=ttrained.getIfLinearOutput(),
+        sigmoid2=sigmoid2
     )
     norm = _tt_get_normalization(ttrained)
 
     return model, norm
 
-def _build_model(struct, weights, thresholds, is_regression):
+def _build_model(struct, weights, thresholds, is_regression, sigmoid2):
+
+    def _sigmoid2(x):
+        return 1.0/(1.0 + K.exp(-2*x))
 
     model = Sequential()
 
@@ -134,7 +138,10 @@ def _build_model(struct, weights, thresholds, is_regression):
         model.layers[-1].set_weights([weights[i-1], thresholds[i-1]])
 
         if i < (len(struct) - 1):
-            model.add(Activation('sigmoid'))
+            if sigmoid2:
+                model.add(Activation(_sigmoid2))
+            else:
+                model.add(Activation('sigmoid'))
         else:
             act = 'linear' if is_regression else 'softmax'
             model.add(Activation(act))
