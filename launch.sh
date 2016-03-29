@@ -13,7 +13,7 @@ set -e
 
 if [ $TYPE = "number" ]
 then
-    python2 ./pixel-NN-training/trainNN	\
+    python2 ./pixel-NN-training/trainNN_keras.py \
 	--training-input $TRAINING \
 	--output $NAME \
         --config <(python2 pixel-NN-training/genconfig.py --type $TYPE --sizeX $SIZEX --sizeY $SIZEY) \
@@ -25,7 +25,7 @@ then
 	--batch 60 \
 	--verbose
 else
-    python2 ./pixel-NN-training/trainNN \
+    python2 ./pixel-NN-training/evalNN_keras.py \
 	--training-input $TRAINING \
 	--output $NAME \
 	--config <(python2 pixel-NN-training/genconfig.py --type $TYPE --sizeX $SIZEX --sizeY $SIZEY) \
