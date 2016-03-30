@@ -8,7 +8,7 @@ from keras.models import Sequential
 from keras.optimizers import SGD
 import keras.regularizers
 
-from keras_utils import Profile, ThresholdEarlyStopping
+from keras_utils import Sigmoid, Profile, ThresholdEarlyStopping
 import root_utils
 import utils
 
@@ -136,7 +136,10 @@ def _build_model(structure,
             )
         )
         if i < (len(structure) - 1):
-            model.add(Activation(activations[0]))
+            if activations[0] == 'sigmoid2':
+                model.add(Sigmoid(2))
+            else:
+                model.add(Activation(activations[0]))
         else:
             model.add(Activation(activations[1]))
 
@@ -183,7 +186,7 @@ def _main():
     parse.add_argument('--config', required=True)
     parse.add_argument('--validation-fraction', type=float, default=0.1)
     parse.add_argument('--structure', nargs='+', type=int, default=[25, 20])
-    parse.add_argument('--activation', choices=['sigmoid', 'tanh', 'relu'], default='sigmoid')
+    parse.add_argument('--activation', choices=['sigmoid', 'sigmoid2', 'tanh', 'relu'], default='sigmoid')
     parse.add_argument('--output-activation', choices=['softmax', 'linear'], default='softmax')
     parse.add_argument('--l2', type=float, default=0.0000001)
     parse.add_argument('--learning-rate', type=float, default=0.08)
