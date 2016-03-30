@@ -8,10 +8,10 @@ from keras.models import Sequential
 from keras.optimizers import SGD
 import keras.regularizers
 
-from Profile import Profile
-from ThresholdEarlyStopping import ThresholdEarlyStopping
-import utils
+from keras_utils import Profile, ThresholdEarlyStopping
 import root_utils
+import utils
+
 
 __all__ = ['train_nn']
 
