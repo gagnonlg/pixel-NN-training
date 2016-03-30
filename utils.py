@@ -49,3 +49,4 @@ def save_normalization(norm, output):
 def load_normalization(path):
     inp = np.loadtxt(path)
     return {'mean': inp[0], 'std': inp[1]}
+

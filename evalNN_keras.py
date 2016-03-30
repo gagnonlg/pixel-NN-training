@@ -7,6 +7,7 @@ import sqlite3
 import keras.models
 import numpy as np
 
+import keras_utils
 import utils
 import root_utils
 
@@ -30,7 +31,10 @@ def eval_nn(inputp,
     output -- output name for the sqlite database (overwrites the 'test' table)
     normalization -- path to the txt file with normalization constants
     """
-    model = keras.models.model_from_yaml(open(model, 'r').read())
+    model = keras.models.model_from_yaml(
+        open(model, 'r').read(),
+        custom_objects={'Sigmoid', keras_utils.Sigmoid}
+    )
     model.load_weights(weights)
 
     _eval_dataset(

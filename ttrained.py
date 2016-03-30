@@ -9,6 +9,8 @@ from keras.optimizers import SGD
 import numpy as np
 import ROOT
 
+import keras_utils
+
 __all__ = [
     'init',
     'from_keras',
@@ -20,7 +22,7 @@ def init():
     scriptdir = os.path.dirname(os.path.abspath(__file__))
     sopath = '{0}/TTrainedNetwork.so'.format(scriptdir)
     if os.path.isfile(sopath):
-        ROOT.gROOT.ProcessLine('.L %s/TTrainedNetwork.so' % scriptdir)
+        ROOT.gROOT.ProcessLine('.L {0}'.format(sopath))
     else:
         raise RuntimeError('{0}: file not found'.format(sopath))
 
@@ -35,7 +37,7 @@ def from_keras(model, normalization=None):
     nHiddenLayerSize = _get_hidden_layer_size(config)
     thresholdVectors = _get_thresholds(model)
     weightMatrices = _get_weights(model)
-    activationFunction = 1 # sigmoid2
+    activationFunction = _get_activation(config)
     linearOutput = _get_linear_output(config)
     normalizeOutput = normalization is not None
 
@@ -96,6 +98,12 @@ def _get_thresholds(model):
             thresh.push_back(_array_to_tvector(layer.get_weights()[1]))
     return thresh
 
+def _get_activation(config):
+    layers = config['layers']
+    acts = [l for l in layers if l['name'] == 'Sigmoid' and 'alpha' in l]
+    if len(acts) == 0 or l['alpha'] != 2:
+        raise RuntimeError('TTrainedNetwork only implements sigmoid2')
+    return 1
 
 def _array_to_tmatrix(arr):
     tmat = ROOT.TMatrixD(arr.shape[0], arr.shape[1])
@@ -113,23 +121,28 @@ def _array_to_tvector(arr):
     return tvec
 
 
-def to_keras(ttrained, sigmoid2=False):
+def to_keras(ttrained):
 
     model = _build_model(
         struct=_tt_get_struct(ttrained),
         weights=_tt_get_weights(ttrained),
         thresholds=_tt_get_thresholds(ttrained),
+        non_lin=ttrained.getActivationFunction(),
         is_regression=ttrained.getIfLinearOutput(),
-        sigmoid2=sigmoid2
     )
     norm = _tt_get_normalization(ttrained)
 
     return model, norm
 
-def _build_model(struct, weights, thresholds, is_regression, sigmoid2):
 
-    def _sigmoid2(x):
-        return 1.0/(1.0 + K.exp(-2*x))
+def _tt_get_activation(act):
+    if act == 1:
+        return keras_utils.Sigmoid(2)
+    else:
+        raise RuntimeError('Unrecognized TTrainedNetwork activation: %d' % act)
+
+
+def _build_model(struct, weights, thresholds, non_lin, is_regression):
 
     model = Sequential()
 
@@ -138,10 +151,7 @@ def _build_model(struct, weights, thresholds, is_regression, sigmoid2):
         model.layers[-1].set_weights([weights[i-1], thresholds[i-1]])
 
         if i < (len(struct) - 1):
-            if sigmoid2:
-                model.add(Activation(_sigmoid2))
-            else:
-                model.add(Activation('sigmoid'))
+            model.add(_tt_get_activation(non_lin))
         else:
             act = 'linear' if is_regression else 'softmax'
             model.add(Activation(act))
