@@ -33,7 +33,7 @@ def eval_nn(inputp,
     """
     model = keras.models.model_from_yaml(
         open(model, 'r').read(),
-        custom_objects={'Sigmoid', keras_utils.Sigmoid}
+        custom_objects={'Sigmoid': keras_utils.Sigmoid}
     )
     model.load_weights(weights)
 
