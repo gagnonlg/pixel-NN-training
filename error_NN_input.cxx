@@ -218,6 +218,9 @@ int main(int argc, char *argv[])
 
 	connect(&inp, tree, nparticles);
 
+	std::vector<TBranch*> bpts_x;
+	std::vector<TBranch*> bpts_y;
+
 	std::vector<std::vector<double>*> *residualsX = new std::vector<std::vector<double>*>;
 	std::vector<std::vector<double>*> *residualsY = new std::vector<std::vector<double>*>;
 	for (int i = 0; i < nparticles; i++) {
@@ -226,9 +229,9 @@ int main(int argc, char *argv[])
 		for (int j = 0; j < nbins; j++) {
 			char key[256];
 			std::sprintf(key, "NN_error_X_%d_%d", i, j);
-			tree->Branch(key, &(residualsX->at(i)->at(j)));
+			bpts_x.push_back(tree->Branch(key, &(residualsX->at(i)->at(j))));
 			std::sprintf(key, "NN_error_Y_%d_%d", i, j);
-			tree->Branch(key, &(residualsY->at(i)->at(j)));
+			bpts_y.push_back(tree->Branch(key, &(residualsY->at(i)->at(j))));
 		}
 	}
 
@@ -239,7 +242,10 @@ int main(int argc, char *argv[])
 		std::vector<double> inputData = get_TTrained_input(inp);
 		std::vector<double> pred = net->calculateNormalized(inputData);
 		prepare_output(inp, pred, nparticles, residualsX, residualsY);
-		tree->Fill();
+		for (int i = 0; i < nbins; i++) {
+			bpts_x.at(i)->Fill();
+			bpts_y.at(i)->Fill();
+		}
 	}
 
 	out.Write(0, TObject::kWriteDelete);
