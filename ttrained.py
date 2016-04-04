@@ -121,7 +121,7 @@ def _array_to_tvector(arr):
     return tvec
 
 
-def to_keras(ttrained):
+def to_keras(ttrained, sigmoid2=False):
 
     model = _build_model(
         struct=_tt_get_struct(ttrained),
