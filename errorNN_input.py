@@ -1,7 +1,10 @@
 import argparse
 import logging
+import os
 import re
 import subprocess
+
+logging.basicConfig(level=logging.INFO)
 
 p = argparse.ArgumentParser()
 p.add_argument('--input', required=True)
@@ -10,6 +13,7 @@ p.add_argument('--output', required=True)
 p.add_argument('--nparticles', type=int)
 p.add_argument('--sizeY', type=int)
 p.add_argument('--nbins', type=int, default=30)
+args = p.parse_args()
 
 if args.sizeY is None:
     m = re.match('.*[0-9]x([0-9]).*', args.input)
@@ -46,11 +50,11 @@ logging.info('nbins: {0}'.format(args.nbins))
 logging.info('sizeY: {0}'.format(sizeY))
 
 subprocess.call([
-    '{0}/error_NN_input',
+    '{0}/error_NN_input'.format(scriptdir),
     args.input,
     args.db,
-    args.ouput,
-    nparticles,
-    args.nbins,
-    sizeY
+    args.output,
+    str(nparticles),
+    str(args.nbins),
+    str(sizeY)
 ])
