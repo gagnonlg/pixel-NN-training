@@ -250,10 +250,10 @@ int main(int argc, char *argv[])
 		tree->GetEntry(i);
 		std::vector<double> inputData = get_TTrained_input(inp);
 		std::vector<double> predN = net->calculateNormalized(inputData);
-		for (int j = 0; j < pred.size(); j++)
+		for (int j = 0; j < predN.size(); j++)
 			pred.at(j) = predN.at(j);
 		prepare_output(inp, predN, nparticles, residualsX, residualsY);
-		for (int j = 0; j < nbins; i++) {
+		for (int j = 0; j < nbins; j++) {
 			bpts_x.at(j)->Fill();
 			bpts_y.at(j)->Fill();
 		}
