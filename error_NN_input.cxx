@@ -208,7 +208,11 @@ int main(int argc, char *argv[])
 	}
 
 	/* This line speeds up the code by a lot */
-	sqlite3_exec(db, "CREATE INDEX ClusterID IF NOT EXISTS ON test (RunNumber, EventNumber, ClusterNumber", NULL, NULL, NULL);
+	rc = sqlite3_exec(db, "CREATE INDEX IF NOT EXISTS ClusterID ON test (RunNumber, EventNumber, ClusterNumber)", NULL, NULL, &zErrMsg);
+	if (rc) {
+		std::fprintf(stderr, "%s\n", sqlite3_errmsg(db));
+		return 1;
+	}
 
 	TFile out(argv[3], "RECREATE");
 
