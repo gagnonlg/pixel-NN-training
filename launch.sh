@@ -24,7 +24,7 @@ then
 	--momentum 0.4 \
 	--batch 60 \
 	--verbose
-else
+elif [ $(python2 -c "print $TYPE.startswith('pos')") == "True" ]
     python2 ./pixel-NN-training/trainNN_keras.py \
 	--training-input $TRAINING \
 	--output $NAME \
@@ -36,6 +36,18 @@ else
 	--momentum 0.3 \
 	--batch 30 \
 	--verbose
+else
+    python2 ./pixel-NN-training/traiNN_keras.py \
+	    --training-input $TRAINING \
+	    --output $NAME \
+	    --config <(python2 pixel-NN-training/genconfig.py --type $TYPE --sizeX $SIZEX --sizeY $SIZEY) \
+	    --structure 25 20 \
+	    --output-activation softmax \
+	    --l2 0.000001 \
+	    --learning-rate 0.3 \
+	    --momentum 0.7 \
+	    --batch 30 \
+	    --verbose
 fi
 
 python2 ./pixel-NN-training/evalNN_keras.py \

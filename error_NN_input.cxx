@@ -235,16 +235,27 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	std::vector<double> pred(nparticles * 2);
+	for (int i = 0; i < nparticles; i++) {
+		char key[256];
+		std::sprintf(key, "NN_position_id_X_%d_pred", i*2);
+		bpts_x.push_back(tree->Branch(key, &pred.at(i*2)));
+		std::sprintf(key, "NN_position_id_Y_%d_pred", i*2+1);
+		bpts_y.push_back(tree->Branch(key, &pred.at(i*2+1)));
+	}
+
 	for (Long64_t i = 0; i < tree->GetEntries(); i++) {
 		if (i % 1000 == 0)
 			std::printf("%d clusters processed\n", i);
 		tree->GetEntry(i);
 		std::vector<double> inputData = get_TTrained_input(inp);
-		std::vector<double> pred = net->calculateNormalized(inputData);
-		prepare_output(inp, pred, nparticles, residualsX, residualsY);
-		for (int i = 0; i < nbins; i++) {
-			bpts_x.at(i)->Fill();
-			bpts_y.at(i)->Fill();
+		std::vector<double> predN = net->calculateNormalized(inputData);
+		for (int j = 0; j < pred.size(); j++)
+			pred.at(j) = predN.at(j);
+		prepare_output(inp, predN, nparticles, residualsX, residualsY);
+		for (int j = 0; j < nbins; i++) {
+			bpts_x.at(j)->Fill();
+			bpts_y.at(j)->Fill();
 		}
 	}
 
