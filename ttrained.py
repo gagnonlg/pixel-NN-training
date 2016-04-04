@@ -101,7 +101,7 @@ def _get_thresholds(model):
 def _get_activation(config):
     layers = config['layers']
     acts = [l for l in layers if l['name'] == 'Sigmoid' and 'alpha' in l]
-    if len(acts) == 0 or l['alpha'] != 2:
+    if len(acts) == 0 or acts[0]['alpha'] != 2:
         raise RuntimeError('TTrainedNetwork only implements sigmoid2')
     return 1
 

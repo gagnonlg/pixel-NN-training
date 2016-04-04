@@ -3,6 +3,7 @@ import argparse
 import keras.models
 import ROOT
 
+from keras_utils import Sigmoid
 import ttrained
 import utils
 
@@ -15,7 +16,7 @@ p.add_argument('--normalization')
 p.add_argument('--output', required=True)
 args = p.parse_args()
 
-model = keras.models.model_from_yaml(open(args.model, 'r').read())
+model = keras.models.model_from_yaml(open(args.model, 'r').read(), custom_objects={'Sigmoid': Sigmoid})
 model.load_weights(args.weights)
 if args.normalization is not None:
     norm = utils.load_normalization(args.normalization)
