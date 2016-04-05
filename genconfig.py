@@ -48,7 +48,7 @@ def gen_targets(type):
             n = 30
         elif type[-2] == '2':
             n = 25
-        elif type[-3] == '3':
+        elif type[-2] == '3':
             n = 20
 
         for i in range(int(type[-2])):
