@@ -35,8 +35,8 @@ def gen_targets(type):
     if type.startswith('pos'):
         m = re.match('pos([123])', type)
         for i in range(int(m.group(1))):
-            fields.append('NN_position_id_X_%d_pred' % i)
-            fields.append('NN_position_id_Y_%d_pred' % i)
+            fields.append('NN_position_id_X_%d' % i)
+            fields.append('NN_position_id_Y_%d' % i)
     elif type == 'number':
         fields.append('NN_nparticles1')
         fields.append('NN_nparticles2')
