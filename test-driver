@@ -34,15 +34,33 @@ calc_res () {
 }
 export -f calc_res
 
+calc_err () {
+    name=$1
+    sql=$2
+
+    etype=$(echo $TYPE | tr -d "error")
+    npart=${etype:0:1}
+    direc=${etype:1:1}
+
+    sqlite3 -separator " " $DB "$sql" \
+	| validate_error $name $tmp/$name.root $SIZEY $npart $direc
+}
+export -f calc_err
+
 if [ $TYPE = "number" ]
 then
     python2 $SCRIPTPATH/gensql.py --type $TYPE \
 	| parallel -P$NJOBS --colsep '\|' calc_ROC
-else
+elif [ $TYPE = "pos1" ] || [ $TYPE = "pos2" ] || [ $TYPE = "pos3" ]
+then
     python2 $SCRIPTPATH/gensql.py --type $TYPE --sizeY $SIZEY \
 	| parallel -P$NJOBS --colsep '\|' calc_res
+else
+    python2 $SCRIPTPATH/gensql.py --type $TYPE --sizeY $SIZEY | head -1 \
+	| parallel -P$NJOBS --colsep '\|' calc_err
 fi
+
 
 hadd -f $OUTPUT $tmp/*.root
 
-rm -r $tmp
+#rm -r $tmp

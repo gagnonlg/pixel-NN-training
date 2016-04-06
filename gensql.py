@@ -3,12 +3,13 @@ import itertools
 import re
 
 layers = [None, 'ibl', 'barrel', 'endcap']
-eta_list = [None, (0,2), (2,5), (5,10)]
+eta_list = [None]
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument('--type', choices=['number','pos1','pos2','pos3'], required=True)
+    p.add_argument('--type', choices=['number','pos1','pos2','pos3', 'error1x', 'error1y', 'error2x', 'error2y', 'error3x', 'error3y'], required=True)
     p.add_argument('--sizeY', default=7, type=int)
+    p.add_argument('--nbins', type=int)
     return p.parse_args()
 
 def name(layer, eta):
@@ -114,9 +115,47 @@ def sql_position(nparticles, sizeY):
 
         print "%s|%s" % (qname,sql)
 
+def sql_error(nparticles, sizeY, direction, nbins):
+
+    selected = ['NN_localEtaPixelIndexWeightedPosition','NN_localPhiPixelIndexWeightedPosition']
+    for i in range(sizeY):
+        selected.append('NN_pitches%d' % i)
+    for i in range(nparticles):
+        selected.append('NN_position_id_%s_%d' % (direction,i))
+        selected.append('NN_position_id_%s_%d_pred' % (direction,i))
+    for i in range(nparticles):
+        for j in range(nbins):
+            selected.append('NN_error_%s_%d_%d_PRED' % (direction, i, j))
+
+    for l,e in itertools.product(layers,eta_list):
+        qname = "error_%s" % name(l,e)
+        sql = sql_select(
+            selected=selected,
+            layer=l,
+            eta=e
+        )
+
+        print "%s|%s" % (qname,sql)
+
 if __name__ == '__main__':
     args = parse_args()
     if args.type == 'number':
         sql_number()
     elif args.type.startswith('pos'):
         sql_position(int(re.match('pos([123])', args.type).group(1)), args.sizeY)
+    elif args.type.startswith('error'):
+        m = re.match('error([123])([xy])', args.type)
+        direction = m.group(2).upper()
+        nparticles = int(m.group(1))
+
+        if args.nbins == None:
+            if nparticles == 1:
+                nbins = 30
+            elif nparticles == 2:
+                nbins = 25
+            else:
+                nbins = 20
+        else:
+            nbins = args.nbins
+
+        sql_error(nparticles, args.sizeY, direction, nbins)

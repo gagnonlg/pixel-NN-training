@@ -1,9 +1,12 @@
 CXXFLAGS = -O2 -Wall -Wextra -std=c++11 $(shell root-config --cflags)
 ROOTLIBS = $(shell root-config --ldflags --libs)
 
-default: ROC ROC_Graph residuals
+default: ROC ROC_Graph residuals validate_error
 ttrained: error_NN_input
 all: default ttrained
+
+validate_error: validate_error.cxx
+	g++ $(CXXFLAGS) -o $@ $< $(ROOTLIBS)
 
 residuals: residuals.cxx
 	g++ $(CXXFLAGS) -o $@ $< $(ROOTLIBS)
