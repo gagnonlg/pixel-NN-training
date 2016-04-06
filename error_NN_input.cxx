@@ -238,9 +238,9 @@ int main(int argc, char *argv[])
 	std::vector<double> pred(nparticles * 2);
 	for (int i = 0; i < nparticles; i++) {
 		char key[256];
-		std::sprintf(key, "NN_position_id_X_%d_pred", i*2);
+		std::sprintf(key, "NN_position_id_X_%d_pred", i);
 		bpts_x.push_back(tree->Branch(key, &pred.at(i*2)));
-		std::sprintf(key, "NN_position_id_Y_%d_pred", i*2+1);
+		std::sprintf(key, "NN_position_id_Y_%d_pred", i);
 		bpts_y.push_back(tree->Branch(key, &pred.at(i*2+1)));
 	}
 
