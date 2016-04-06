@@ -129,7 +129,7 @@ void fill_amplitude(double res, std::vector<double> *vect, double max)
 {
 	double sf = 1.0 / (2.0 * max);
 	double epsilon = std::numeric_limits<double>::epsilon();
-	int  amp = (res + max) * sf * (vect->size() - 1) - epsilon;
+	int  amp = (res + max) * sf * ((vect->size() - 1) - epsilon);
 	if (amp < 0)
 		amp = 0;
 	if ((size_t)amp > (vect->size() - 1))
