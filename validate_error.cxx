@@ -141,6 +141,7 @@ int main(int argc, char *argv[])
 	std::string name(argv[1]);
 
 	TH1D hist_rms((name + "_rms").c_str(), "", 1000, -maximum, maximum);
+	TH1D hist_res((name + "_res").c_str(), "", 1000, -maximum, maximum);
 	TH1D hist_pull((name + "_pull").c_str(), "", 1000, -5, 5);
 	TH2D hist_res_rms((name + "_res_rms").c_str(), "", 1000, -maximum, maximum, 1000, -maximum, maximum);
 
@@ -169,9 +170,11 @@ int main(int argc, char *argv[])
 			std::pair<double,double> pos = get_pos(fields, i*2 + sizeY + 2);
 			double pos_truth = corrected(centerpos, pos.first, sizeY, pitches);
 			double pos_predi = corrected(centerpos, pos.second, sizeY, pitches);
+			double res = pos_predi - pos_truth;
 			hist_rms.Fill(rms.at(i));
-			hist_pull.Fill((pos_predi - pos_truth) / rms.at(i));
-			hist_res_rms.Fill(pos_predi - pos_truth, rms.at(i));
+			hist_rms.Fill(res);
+			hist_pull.Fill(res / rms.at(i));
+			hist_res_rms.Fill(res, rms.at(i));
 		}
 	}
 
