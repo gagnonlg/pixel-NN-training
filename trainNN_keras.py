@@ -140,6 +140,8 @@ def _build_model(structure,
                 model.add(Sigmoid(2))
             else:
                 model.add(Activation(activations[0]))
+        elif activations[1] == 'sigmoid2':
+            model.add(Sigmoid(2))
         else:
             model.add(Activation(activations[1]))
 
@@ -187,7 +189,7 @@ def _main():
     parse.add_argument('--validation-fraction', type=float, default=0.1)
     parse.add_argument('--structure', nargs='+', type=int, default=[25, 20])
     parse.add_argument('--activation', choices=['sigmoid', 'sigmoid2', 'tanh', 'relu'], default='sigmoid')
-    parse.add_argument('--output-activation', choices=['softmax', 'linear'], default='softmax')
+    parse.add_argument('--output-activation', choices=['softmax', 'linear', 'sigmoid', 'sigmoid2'], default='softmax')
     parse.add_argument('--l2', type=float, default=0.0000001)
     parse.add_argument('--learning-rate', type=float, default=0.08)
     parse.add_argument('--momentum', type=float, default=0.4)
