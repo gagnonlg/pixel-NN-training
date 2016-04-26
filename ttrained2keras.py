@@ -20,4 +20,4 @@ with open(args.output + '.model.yaml', 'w') as yfile:
     yfile.write(model.to_yaml())
 
 model.save_weights(args.output + '.weights.hdf5', overwrite=True)
-utils.save_normalization(norm, args.output + '.normalization.txt')
+utils.save_normalization(norm, args.output)
