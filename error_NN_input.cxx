@@ -173,7 +173,7 @@ void prepare_output(Input &inp, std::vector<double> &outp, int nparticles,
 		fill_amplitude(x_pred - x_truth, residualsX->at(i), max);
 		/* Y */
 		max = (i == 0)? 0.3 : 0.5;
-		fill_amplitude(x_pred - x_truth, residualsY->at(i), max);
+		fill_amplitude(y_pred - y_truth, residualsY->at(i), max);
 	}
 }
 
