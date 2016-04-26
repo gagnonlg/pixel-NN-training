@@ -25,8 +25,8 @@ def gen_inputs(sizeX, sizeY, type=None):
 
     if type.startswith('error'):
         for i in range(int(type[-2])):
-            fields.append('NN_position_id_X_%d' % i)
-            fields.append('NN_position_id_Y_%d' % i)
+            fields.append('NN_position_id_X_%d_pred' % i)
+            fields.append('NN_position_id_Y_%d_pred' % i)
 
     return fields
 
