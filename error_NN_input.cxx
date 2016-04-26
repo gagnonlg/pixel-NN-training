@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
 		for (int j = 0; j < predN.size(); j++)
 			pred.at(j) = predN.at(j);
 		prepare_output(inp, predN, nparticles, residualsX, residualsY);
-		for (int j = 0; j < nbins; j++) {
+		for (int j = 0; j < bpts_x.size(); j++) {
 			bpts_x.at(j)->Fill();
 			bpts_y.at(j)->Fill();
 		}
