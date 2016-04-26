@@ -154,7 +154,10 @@ def _build_model(struct, weights, thresholds, non_lin, is_regression):
             model.add(_tt_get_activation(non_lin))
         else:
             act = 'linear' if is_regression else 'softmax'
-            model.add(Activation(act))
+            if act == 'softmax':
+                model.add(keras_utils.Sigmoid(2))
+            else:
+                model.add(Activation(act))
 
     loss = 'binary_crossentropy' if act == 'softmax' else 'mae'
     model.compile(SGD(), loss)
