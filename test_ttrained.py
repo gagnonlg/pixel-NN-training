@@ -5,7 +5,7 @@ import ttrained
 
 
 def weights(m):
-    return [l.get_weights() for l in m.layers if type(l) == 'Dense']
+    return [l.get_weights() for l in m.layers if str(type(l)) == "<class 'keras.layers.core.Dense'>"]
 
 def test(ttrained_path, test_data_path, ntest=1000, error=False):
 
@@ -21,7 +21,7 @@ def test(ttrained_path, test_data_path, ntest=1000, error=False):
 
     for (w1, b1), (w2, b2) in zip(weights(mo),weights(mo2)):
         assert np.array_equal(w1,w2)
-        assert np.array_equal(w2,b2)
+        assert np.array_equal(b1,b2)
 
     test_file = ROOT.TFile(test_data_path)
     dtree = test_file.Get('NNinput')
@@ -80,7 +80,7 @@ def test(ttrained_path, test_data_path, ntest=1000, error=False):
         assert np.allclose(tt_arr,k_out)
 
         tt_out_2 = tt2.calculateNormalized(vec)
-        tt_arr_2 = np.array(tt_out)
+        tt_arr_2 = np.array(tt_out_2)
         assert np.allclose(k_out,tt_arr_2)
 
         arr2 = arr - no2['mean']
