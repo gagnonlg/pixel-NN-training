@@ -39,7 +39,7 @@ def from_keras(model, normalization=None):
     weightMatrices = _get_weights(model)
     activationFunction = _get_activation(config)
     linearOutput = _get_linear_output(config)
-    normalizeOutput = normalization is not None
+    normalizeOutput = False
 
     ttrained = ROOT.TTrainedNetwork(
         nInput,
