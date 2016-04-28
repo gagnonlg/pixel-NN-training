@@ -145,7 +145,7 @@ def _build_model(structure,
         else:
             model.add(Activation(activations[1]))
 
-    loss = 'categorical_crossentropy' if activations[1] == 'softmax' else 'mae'
+    loss = 'categorical_crossentropy' if activations[1] != 'linear' else 'mae'
 
     model.compile(
         loss=loss,
