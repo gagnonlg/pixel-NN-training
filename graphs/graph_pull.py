@@ -12,6 +12,7 @@ ROOT.SetAtlasStyle()
 
 def getArgs():
     p = argparse.ArgumentParser()
+    p.add_argument('direction')
     p.add_argument('nparticles')
     p.add_argument('input1')
     p.add_argument('label1')
@@ -20,7 +21,7 @@ def getArgs():
     return p.parse_args()
 
 
-def graph(input1, input2, label1, label2, layer, direction, nparticles):
+def graph(input1, input2, label1, label2, direction, nparticles):
 
     file1 = input1
     file2 = input2
@@ -28,8 +29,8 @@ def graph(input1, input2, label1, label2, layer, direction, nparticles):
     tfile1 = ROOT.TFile(file1, 'READ')
     tfile2 = ROOT.TFile(file2, 'READ')
 
-    hist1 = tfile1.Get('residuals_{0}_all_{1}'.format(layer,direction))
-    hist2 = tfile2.Get('residuals_{0}_all_{1}'.format(layer,direction))
+    hist1 = tfile1.Get('error_all_all_pull')
+    hist2 = tfile2.Get('error_all_all_pull')
 
     if hist2.Integral() == 0 or hist1.Integral() == 0:
  	return
@@ -48,26 +49,22 @@ def graph(input1, input2, label1, label2, layer, direction, nparticles):
 
     c = ROOT.TCanvas('c', '', 0, 0, 600, 600)
 
-    hist2.SetTitle(';residuals [mm]; clusters')
-
+    hist2.SetTitle(';pull; clusters')
     u = hist2.GetMean()
     s = hist2.GetStdDev()
-    if nparticles != '3':
-        hist2.GetXaxis().SetRangeUser(u - 3*s, u + 3*s)
+    hist2.GetXaxis().SetRangeUser(u - 3*s, u + 3*s)
     hist2.SetLineColor(ROOT.kRed)
     hist2.SetStats()
     hist2.SetName(label2)
     hist2.GetYaxis().SetTitleOffset(1.5)
     hist2.SetMaximum(hist2.GetMaximum()*1.5)
-    hist2.GetXaxis().SetLabelSize(0.035)
     hist2.GetYaxis().SetLabelSize(0.035)
     hist2.Draw()
 
     hist1.SetLineColor(ROOT.kBlack)
     u = hist1.GetMean()
     s = hist1.GetStdDev()
-    if nparticles != '3':
-        hist1.GetXaxis().SetRangeUser(u - 3*s, u + 3*s)
+    hist1.GetXaxis().SetRangeUser(u - 3*s, u + 3*s)
     hist1.SetStats()
     hist1.SetName(label1)
     hist1.Draw('sames')
@@ -92,17 +89,15 @@ def graph(input1, input2, label1, label2, layer, direction, nparticles):
     txt.SetNDC()
     txt.SetTextSize(0.034)
     txt.DrawText(0.2,0.82, 'Local {0} direction'.format(direction))
-    txt.DrawText(0.2,0.78, layer_name(layer))
+    txt.DrawText(0.2,0.78, 'All layers')
 
     ROOT.ATLAS_LABEL(0.2,0.88)
     txt.DrawText(0.36, 0.88, "Internal")
 
-
-
     s = '' if nparticles == 1 else 's'
-    txt.DrawText(0.2,0.74, 'JZ7 {} particle{} PIXEL clusters'.format(nparticles,s))
+    txt.DrawText(0.2,0.74, 'JZ7 {} particle{} clusters'.format(nparticles,s))
 
-    c.SaveAs('residuals_{}_{}_all_{}.pdf'.format(nparticles,layer,direction))
+    c.SaveAs('pull_{}_all_all_{}.pdf'.format(nparticles,direction))
 
 def layer_name(l):
     if l == 'all':
@@ -117,13 +112,13 @@ def layer_name(l):
 def main():
     args = getArgs()
 
+    ROOT.gROOT.SetBatch()
+    ROOT.SetAtlasStyle()
     ROOT.gStyle.SetOptStat(1101)
     ROOT.gStyle.SetStatBorderSize(1)
     ROOT.gStyle.SetStatFontSize(0.03)
 
-    layers = ['all', 'ibl', 'barrel', 'endcap']
-    for l, d in it.product(layers, ['X','Y']):
-        graph(args.input1, args.input2, args.label1, args.label2 ,l,d,args.nparticles)
+    graph(args.input1, args.input2, args.label1, args.label2 ,args.direction,args.nparticles)
 
 if __name__ == '__main__':
     main()
