@@ -6,3 +6,5 @@ ROC
 ROC_Graph
 residuals
 STDIN.*
+validate_error
+graphs/thin_graph
