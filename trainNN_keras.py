@@ -111,9 +111,9 @@ def train_nn(training_input,
     if save_all:
         name = output
         if name.endswith('hdf5'):
-            name = name.replace('hdf5', '{epoch:02d}-{val_loss:.2f}.hdf5')
+            name = name.replace('hdf5', '{epoch:03d}.hdf5')
         else:
-            name += '.{epoch:02d}-{val_loss:.2f}.hdf5'
+            name += '.{epoch:03d}.hdf5'
         callbacks.append(ModelCheckpoint(name))
 
     nentries = root_utils.get_entries(training_input, 'NNinput')
