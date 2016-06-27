@@ -33,6 +33,7 @@ def train_nn(training_input,
              threshold=0.995,
              profile=False,
              nbworkers=1,
+             save_all=False,
              verbose=False): \
             # pylint: disable=too-many-arguments,too-many-locals,dangerous-default-value
     """ train a neural network
@@ -53,6 +54,7 @@ def train_nn(training_input,
     threshold -- threshold to decide if loss improvement is significant
     profile -- create a memory usage log
     nbworkers -- number of parallel thread to load minibatches
+    save_all -- save weights at each epoch
     verbose -- bla bla bla level
     """
     branches = utils.get_data_config_names(config, meta=False)
@@ -105,6 +107,14 @@ def train_nn(training_input,
 
     if profile:
         callbacks.append(Profile('%s.profile.txt' % output))
+
+    if save_all:
+        name = output
+        if name.endswith('hdf5'):
+            name = name.replace('hdf5', '{epoch:02d}-{val_loss:.2f}.hdf5')
+        else:
+            name += '.{epoch:02d}-{val_loss:.2f}.hdf5'
+        callbacks.append(ModelCheckpoint(name))
 
     nentries = root_utils.get_entries(training_input, 'NNinput')
 
@@ -200,6 +210,7 @@ def _main():
     parse.add_argument('--threshold', type=float, default=0.995)
     parse.add_argument('--profile', default=False, action='store_true')
     parse.add_argument('--nbworkers', default=1, type=int)
+    parse.add_argument('--save-all', action='store_true', default=False)
     parse.add_argument('--verbose', default=False, action='store_true')
     args = parse.parse_args()
 
@@ -221,6 +232,7 @@ def _main():
         args.threshold,
         args.profile,
         args.nbworkers,
+        args.save_all,
         args.verbose
     )
 
