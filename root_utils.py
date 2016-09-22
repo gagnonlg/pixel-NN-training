@@ -14,9 +14,9 @@ def calc_normalization(path, tree, branches):
     for i, branch in enumerate(branches):
         arr = rnp.tree2array(tree, branches=branch)
         mean[i] = np.mean(arr)
-        std_ = np.std(arr)
-        std_[np.where(std_ == 0)] = 1
-        std[i] = std_
+        std[i] = np.std(arr)
+        if std[i] == 0:
+            std[i] = 1
     return {'std': std, 'mean': mean}
 
 
