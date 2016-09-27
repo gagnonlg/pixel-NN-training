@@ -5,11 +5,11 @@ import warnings
 
 from keras import activations
 from keras.callbacks import Callback, EarlyStopping
-from keras.layers.core import MaskedLayer
+from keras.engine.topology import Layer
 import numpy as np
 
 
-class Sigmoid(MaskedLayer):
+class Sigmoid(Layer):
     def __init__(self, alpha, **kwargs):
         super(Sigmoid, self).__init__(**kwargs)
         self.alpha = alpha
