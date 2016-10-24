@@ -14,9 +14,8 @@ class Sigmoid(Layer):
         super(Sigmoid, self).__init__(**kwargs)
         self.alpha = alpha
 
-    def get_output(self, train=False):
-        X = self.get_input(train)
-        return activations.sigmoid(self.alpha*X)
+    def call(self, x, mask=None):
+        return activations.sigmoid(self.alpha*x)
 
     def get_config(self):
         config = {'name': self.__class__.__name__,
