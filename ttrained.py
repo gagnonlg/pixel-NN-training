@@ -29,11 +29,11 @@ def init():
 
 def from_keras(model, normalization=None):
 
-    config = json.loads(model.to_json())
+    config = json.loads(model.to_json())['config']
 
-    nInput = config['layers'][0]['input_dim']
-    nHidden = len([l for l in config['layers'] if l['name'] == 'Dense']) - 1
-    nOutput = config['layers'][-2]['output_dim']
+    nInput = config[0]['config']['input_dim']
+    nHidden = len([l for l in config if l['class_name'] == 'Dense']) - 1
+    nOutput = config[-2]['config']['output_dim']
     nHiddenLayerSize = _get_hidden_layer_size(config)
     thresholdVectors = _get_thresholds(model)
     weightMatrices = _get_weights(model)
@@ -73,13 +73,16 @@ def _set_normalization(ttrained, normalization):
 
 
 def _get_linear_output(config):
-    pairs = [('activation','linear') in l.items() for l in config['layers']]
-    return pairs[-1]
+    acts = [l for l in config if l['class_name'] == 'Activation']
+    try:
+        return acts[-1]['config']['activation'] == 'linear'
+    except:
+        return False
 
 def _get_hidden_layer_size(config):
     vect = ROOT.vector('Int_t')()
-    for hl in [l for l in config['layers'] if l['name'] == 'Dense'][1:]:
-        vect.push_back(hl['input_dim'])
+    for hl in [l for l in config if l['class_name'] == 'Dense'][1:]:
+        vect.push_back(hl['config']['input_dim'])
     return vect
 
 
@@ -99,9 +102,8 @@ def _get_thresholds(model):
     return thresh
 
 def _get_activation(config):
-    layers = config['layers']
-    acts = [l for l in layers if l['name'] == 'Sigmoid' and 'alpha' in l]
-    if len(acts) == 0 or acts[0]['alpha'] != 2:
+    acts = [l for l in config if l['class_name'] == 'Sigmoid' and 'alpha' in l['config']]
+    if len(acts) == 0 or acts[0]['config']['alpha'] != 2:
         raise RuntimeError('TTrainedNetwork only implements sigmoid2')
     return 1
 
