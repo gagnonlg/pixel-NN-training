@@ -27,10 +27,8 @@ def train_nn(training_input,
              learning_rate=0.08,
              momentum=0.4,
              batch=60,
-             min_epochs=10,
              max_epochs=1000,
-             patience_increase=1.75,
-             threshold=0.995,
+             patience=5,
              profile=False,
              nbworkers=1,
              save_all=False,
@@ -48,10 +46,8 @@ def train_nn(training_input,
     regularizer -- l2 weight regularizer
     momentum -- momentum of weight updates
     batch -- minibatch size
-    min_epochs -- minimun number of training epochs
     max_epochs -- maximum number of training epochs
-    patience_increase -- amount of patience added when loss improves
-    threshold -- threshold to decide if loss improvement is significant
+    patience -- early stopping tolerance, in number of epochs
     profile -- create a memory usage log
     nbworkers -- number of parallel thread to load minibatches
     save_all -- save weights at each epoch
@@ -97,9 +93,7 @@ def train_nn(training_input,
 
     callbacks = [
         _early_stopping_callback(
-            min_epochs,
-            threshold,
-            patience_increase,
+            patience,
             verbose
         ),
         _checkpoint_callback(output, verbose)
@@ -165,16 +159,9 @@ def _build_model(structure,
     return model
 
 
-def _early_stopping_callback(min_epochs,
-                             threshold,
-                             increase,
-                             verbose):
-    return ThresholdEarlyStopping(
-        monitor='val_loss',
-        min_epochs=min_epochs,
-        threshold=threshold,
-        increase=increase,
-        mode='min',
+def _early_stopping_callback(patience, verbose):
+    return keras.callbacks.EarlyStopping(
+        patience=patience,
         verbose=verbose
     )
 
@@ -204,10 +191,8 @@ def _main():
     parse.add_argument('--learning-rate', type=float, default=0.08)
     parse.add_argument('--momentum', type=float, default=0.4)
     parse.add_argument('--batch', type=int, default=60)
-    parse.add_argument('--min-epochs', type=int, default=10)
     parse.add_argument('--max-epochs', type=int, default=1000)
-    parse.add_argument('--patience-increase', type=float, default=1.75)
-    parse.add_argument('--threshold', type=float, default=0.995)
+    parse.add_argument('--patience', type=int, default=5)
     parse.add_argument('--profile', default=False, action='store_true')
     parse.add_argument('--nbworkers', default=1, type=int)
     parse.add_argument('--save-all', action='store_true', default=False)
@@ -226,10 +211,8 @@ def _main():
         args.learning_rate,
         args.momentum,
         args.batch,
-        args.min_epochs,
         args.max_epochs,
-        args.patience_increase,
-        args.threshold,
+        args.patience,
         args.profile,
         args.nbworkers,
         args.save_all,
