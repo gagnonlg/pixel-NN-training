@@ -112,7 +112,7 @@ def train_nn(training_input,
 
     nentries = root_utils.get_entries(training_input, 'NNinput')
 
-    model.fit_generator(
+    history = model.fit_generator(
         generator=data_generator,
         samples_per_epoch=int(nentries * (1 - validation_fraction)),
         nb_epoch=max_epochs,
@@ -121,6 +121,10 @@ def train_nn(training_input,
         validation_data=valid_data,
         nb_worker=nbworkers
     )
+
+    np.savetxt(output+'.training_loss.txt', history.history['loss'])
+    np.savetxt(output+'.validation_loss.txt', history.history['val_loss'])
+
 
 
 def _build_model(structure,
