@@ -7,6 +7,7 @@ from keras.layers.core import Dense, Activation
 from keras.models import Sequential
 from keras.optimizers import SGD
 import keras.regularizers
+import numpy as np
 
 from keras_utils import Sigmoid, Profile, ThresholdEarlyStopping
 import root_utils
